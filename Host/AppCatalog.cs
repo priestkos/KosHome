@@ -4,10 +4,10 @@ internal static class AppCatalog
 {
     public static readonly AppInfo[] All =
     [
-        new("Calc14", "Calc14", "A fast, pretty calculator.", "/calc", false,
-            pi => pi.Create<Apps.Calc14.Calc14Plugin>()),
         new("Aetherpath", "Aetherpath", "Prices every way to get where you're going - and tells you where your free and favored slots earn the most gil.", "/aetherpath, /ap", true,
             pi => pi.Create<Apps.Aetherpath.Plugin>()),
+        new("Calc14", "Calc14", "A fast, pretty calculator.", "/calc", false,
+            pi => pi.Create<Apps.Calc14.Calc14Plugin>()),
         new("FrontlineAdvisor", "FrontlineAdvisor", "Who is winning, who to hit, who is about to matter.", "/fla", true,
             pi => pi.Create<Apps.FrontlineAdvisor.Plugin>()),
         new("GateAlert", "Gate Alert", "Yells at you the moment your GATE opens in the Gold Saucer.", "/gatealert, /gatetest", true,

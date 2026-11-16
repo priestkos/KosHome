@@ -1,9 +1,33 @@
 # KosHome
 
-One home for the PriestKos plugin tools: features from several of the PriestKos Dalamud plugins are being folded into this single plugin for easier management.
+One home for the PriestKos plugin tools. Nine former standalone Dalamud plugins live here as **apps** you switch on
+and off from one window.
 
 `/koshome` · Dalamud API 15 · .NET 10
 
 > **No support will be provided. This software is to be used as is, without warranty of any kind.**
 
-Status: scaffold only. No modules have been moved in yet.
+| App | Commands | What it does |
+|---|---|---|
+| Aetherpath | `/aetherpath`, `/ap` | Prices every way to get where you're going, and where your free and favored slots earn the most gil. |
+| Calc14 | `/calc` | A fast, pretty calculator. |
+| FrontlineAdvisor | `/fla` | Who is winning, who to hit, who is about to matter. |
+| Gate Alert | `/gatealert`, `/gatetest` | Yells at you the moment your GATE opens in the Gold Saucer. |
+| Nameplate Offset | `/npoffset` | Raise or lower the nameplate above a character's head. |
+| Quill14 | `/quill` | Roleplay posts: smart splitting, markup, templates and paced sending. |
+| VenueLedger | `/venue` | Every venue you know, on one clock. |
+| Wardrobe14 | `/pmm` | A cross-collection view of your Penumbra mods. |
+| WorldClock14 | `/tz`, `/tzconfig` | One time, every timezone, one click to chat. |
+
+All apps start switched on. Untick one in `/koshome` to stop it; its commands and windows go away until you tick it again.
+
+## Moving from the standalone plugins
+
+- **Uninstall the old plugin** in `/xlplugins`. KosHome won't start an app while its old plugin is loaded, and stops the
+  app if the old plugin loads later; the app's row in `/koshome` says why.
+- **Settings carry over.** On first start each app reads the old plugin's settings file and from then on saves its own
+  copy under `pluginConfigs/KosHome/`. The old file is never changed or deleted.
+
+## Building
+
+`dotnet build -c Release` (needs the Dalamud dev distribution). Tests: `pwsh tests/run-all.ps1`.
