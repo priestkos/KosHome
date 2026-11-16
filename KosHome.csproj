@@ -1,10 +1,11 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.1.0</Version>
-    <Description>One home for the PriestKos plugin tools, folded into a single plugin.</Description>
+    <Version>1.0.0</Version>
+    <Description>One home for the PriestKos plugin tools: Aetherpath, Calc14, FrontlineAdvisor, GateAlert, NameplateOffset, Quill14, VenueLedger, Wardrobe14 and WorldClock14 as apps you switch on and off from one window.</Description>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <PropertyGroup>
     <Author>PriestKos</Author>
@@ -14,4 +15,8 @@
     <RepoUrl>https://github.com/priestkos/KosHome</RepoUrl>
     <Tags>utility;ui</Tags>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+    <None Remove="tests/**" />
+  </ItemGroup>
 </Project>
