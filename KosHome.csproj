@@ -1,0 +1,17 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <Description>One home for the PriestKos plugin tools, folded into a single plugin.</Description>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Author>PriestKos</Author>
+    <Authors>PriestKos</Authors>
+    <Name>KosHome</Name>
+    <Punchline>One home for the PriestKos plugin tools.</Punchline>
+    <RepoUrl>https://github.com/priestkos/KosHome</RepoUrl>
+    <Tags>utility;ui</Tags>
+  </PropertyGroup>
+</Project>
