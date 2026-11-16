@@ -18,5 +18,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.Quill14.Plugin>()),
         new("VenueLedger", "VenueLedger", "Every venue you know, on one clock.", "/venue", false,
             pi => pi.Create<Apps.VenueLedger.Plugin>()),
+        new("Wardrobe14", "Wardrobe14", "A cross-collection view of your Penumbra mods; bulk toggles and Glamourer looks to follow.", "/pmm", false,
+            pi => pi.Create<Apps.Wardrobe14.Plugin>()),
     ];
 }
