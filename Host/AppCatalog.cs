@@ -8,5 +8,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.Calc14.Calc14Plugin>()),
         new("Aetherpath", "Aetherpath", "Prices every way to get where you're going - and tells you where your free and favored slots earn the most gil.", "/aetherpath, /ap", true,
             pi => pi.Create<Apps.Aetherpath.Plugin>()),
+        new("FrontlineAdvisor", "FrontlineAdvisor", "Who is winning, who to hit, who is about to matter.", "/fla", true,
+            pi => pi.Create<Apps.FrontlineAdvisor.Plugin>()),
     ];
 }
