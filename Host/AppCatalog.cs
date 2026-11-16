@@ -12,5 +12,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.FrontlineAdvisor.Plugin>()),
         new("GateAlert", "Gate Alert", "Yells at you the moment your GATE opens in the Gold Saucer.", "/gatealert, /gatetest", true,
             pi => pi.Create<Apps.GateAlert.GateAlertPlugin>()),
+        new("NameplateOffset", "Nameplate Offset", "Raise or lower the nameplate above a character's head.", "/npoffset", false,
+            pi => pi.Create<Apps.NameplateOffset.Plugin>()),
     ];
 }
