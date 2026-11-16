@@ -16,5 +16,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.NameplateOffset.Plugin>()),
         new("Quill14", "Quill14", "Roleplay posts: smart splitting, markup, templates and paced sending to Say, Party, Tell or Reply.", "/quill", true,
             pi => pi.Create<Apps.Quill14.Plugin>()),
+        new("VenueLedger", "VenueLedger", "Every venue you know, on one clock.", "/venue", false,
+            pi => pi.Create<Apps.VenueLedger.Plugin>()),
     ];
 }

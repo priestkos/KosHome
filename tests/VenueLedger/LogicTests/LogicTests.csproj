@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>KosHome.Apps.VenueLedger.LogicTests</RootNamespace>
+    <AssemblyName>VenueLedger.LogicTests</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <!-- The real logic files, compiled as-is. Configuration.cs needs only the IPluginConfiguration stub. -->
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="DalamudStubs.cs" />
+    <Compile Include="../../../Apps/VenueLedger/Configuration.cs" />
+    <Compile Include="../../../Apps/VenueLedger/Venue.cs" />
+    <Compile Include="../../../Apps/VenueLedger/Schedule.cs" />
+  </ItemGroup>
+
+</Project>
