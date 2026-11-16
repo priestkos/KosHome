@@ -14,5 +14,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.GateAlert.GateAlertPlugin>()),
         new("NameplateOffset", "Nameplate Offset", "Raise or lower the nameplate above a character's head.", "/npoffset", false,
             pi => pi.Create<Apps.NameplateOffset.Plugin>()),
+        new("Quill14", "Quill14", "Roleplay posts: smart splitting, markup, templates and paced sending to Say, Party, Tell or Reply.", "/quill", true,
+            pi => pi.Create<Apps.Quill14.Plugin>()),
     ];
 }

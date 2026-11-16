@@ -18,5 +18,9 @@
   <ItemGroup>
     <Compile Remove="tests/**" />
     <None Remove="tests/**" />
+    <Content Include="Apps\Quill14\Data\words.txt.gz" Link="Data\words.txt.gz">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
   </ItemGroup>
 </Project>
