@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>logiccheck</AssemblyName>
+    <RootNamespace>logiccheck</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../Apps/Aetherpath/Core/SlotLogic.cs" Link="SlotLogic.cs" />
+    <!-- The Configuration.cs source check walks up from the output dir; the file now lives under Apps/. -->
+    <None Include="../../../Apps/Aetherpath/Configuration.cs" Link="Configuration.cs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
