@@ -10,5 +10,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.Aetherpath.Plugin>()),
         new("FrontlineAdvisor", "FrontlineAdvisor", "Who is winning, who to hit, who is about to matter.", "/fla", true,
             pi => pi.Create<Apps.FrontlineAdvisor.Plugin>()),
+        new("GateAlert", "Gate Alert", "Yells at you the moment your GATE opens in the Gold Saucer.", "/gatealert, /gatetest", true,
+            pi => pi.Create<Apps.GateAlert.GateAlertPlugin>()),
     ];
 }

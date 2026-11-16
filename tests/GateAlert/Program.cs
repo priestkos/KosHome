@@ -1,0 +1,168 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using KosHome.Apps.GateAlert.Core;
+
+/// <summary>
+/// Runnable checks for the announcement parser and the watch matcher.
+/// The real announcement wording cannot be generated outside the game, so the
+/// samples here mirror the shapes the Gold Saucer Attendant uses.
+/// Run: dotnet run --project GateAlert.Tests
+/// </summary>
+internal static class Program
+{
+    private const string Attendant = "Gold Saucer Attendant";
+
+    private static int passed;
+    private static int failed;
+
+    private static int Main()
+    {
+        // ---- parsing: the shapes we expect to recognise ----
+        Parses(Attendant, "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.",
+            "Cliffhanger", "the Event Square");
+
+        Parses(Attendant, "A limited-time event \"Any Way the Wind Blows\" is now underway in the Wonder Square.",
+            "Any Way the Wind Blows", "the Wonder Square");
+
+        Parses(Attendant, "A limited-time event \u201cAir Force One\u201d is now underway in the Airship Landing.",
+            "Air Force One", "the Airship Landing");
+
+        Parses(Attendant, "A limited-time event \u201cLeap of Faith\u201d is now underway in the Gold Saucer.",
+            "Leap of Faith", "the Gold Saucer");
+
+        Parses(Attendant, "The GATE \u201cThe Slice Is Right\u201d has begun in the Round Square.",
+            "The Slice Is Right", "the Round Square");
+
+        // No quotes at all, but the name is one we know and the line is a marker.
+        Parses(Attendant, "A limited-time event, Cliffhanger, is now underway in the Event Square.",
+            "Cliffhanger", "the Event Square");
+
+        // Non-breaking space, the kind the client sprinkles into announcements.
+        Parses(Attendant, "A limited-time\u00a0event \u201cCliffhanger\u201d is now underway in the Event Square.",
+            "Cliffhanger", "the Event Square");
+
+        // User-supplied GATE name, announced by the attendant without an announcement phrase.
+        Parses(Attendant, "The \u201cBlunderville Sprint\u201d GATE is now open!",
+            "Blunderville Sprint", string.Empty, ["Blunderville Sprint"]);
+
+        // Attendant sender is matched exactly (trim + case-insensitive), not as a substring.
+        Parses("  gold saucer attendant  ", "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.",
+            "Cliffhanger", "the Event Square");
+
+        // ---- parsing: what must NOT fire ----
+        Rejects("Random Player", "That \"Cliffhanger\" was fun, eh?");
+        Rejects(Attendant, "Please visit the \u201cPrize Claim\u201d counter when you have a moment.");
+        Rejects(Attendant, "Speak with the \u201cGate Keeper\u201d for details on upcoming events.");
+        Rejects(Attendant, string.Empty);
+        Rejects(Attendant, "A limited-time event is now underway in the Event Square.");
+
+        // Player spoof: same wording as a real announcement, wrong sender — must not parse.
+        Rejects("Random Player", "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.");
+        Rejects("Random Player", "A limited-time event \"Any Way the Wind Blows\" is now underway in the Wonder Square.");
+        Rejects("Totally Not Gold Saucer Attendant", "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.");
+        Rejects("Gold Saucer Attendant's Cousin", "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.");
+        Rejects(string.Empty, "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.");
+        Rejects(null!, "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.");
+
+        // Doubled open curly quotes must not truncate via a bogus close-quote set.
+        Parses(Attendant, "A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.",
+            "Cliffhanger", "the Event Square");
+
+        // Custom tokens match whole words only, and unquoted ones need an announcement line.
+        Rejects(Attendant, "Welcome to the Gold Saucer!", ["the"]);
+        Rejects(Attendant, "Please visit the \u201cPrize Claim\u201d counter when you have a moment.", ["rize"]);
+        Parses(Attendant, "The \u201cBlunderville Sprint\u201d GATE is now open!",
+            "Blunderville Sprint", string.Empty, ["sprint"]);
+        Parses(Attendant, "A limited-time event, Blunderville Sprint, is now underway in the Event Square.",
+            "Blunderville Sprint", "the Event Square", ["Blunderville Sprint"]);
+
+        // ---- matching ----
+        var cliffhanger = new GateAnnouncement("Cliffhanger", "the Event Square", Attendant, "x");
+        var wind = new GateAnnouncement("Any Way the Wind Blows", "the Wonder Square", Attendant, "x");
+
+        var inSaucer = GateCatalog.GoldSaucerTerritoryId;
+        var elsewhere = 129u; // Limsa Lominsa Lower Decks
+
+        Check("all gates watches Cliffhanger", GateMatcher.ShouldAnnounce(cliffhanger, new GateWatchSettings(true, true, inSaucer, true, [], string.Empty)));
+        Check("all gates watches the wind", GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, true, [], string.Empty)));
+        Check("paused plugin says nothing", !GateMatcher.ShouldAnnounce(cliffhanger, new GateWatchSettings(false, true, inSaucer, true, [], string.Empty)));
+        Check("outside the saucer says nothing", !GateMatcher.ShouldAnnounce(cliffhanger, new GateWatchSettings(true, true, elsewhere, true, [], string.Empty)));
+        Check("outside the saucer still fires when the guard is off", GateMatcher.ShouldAnnounce(cliffhanger, new GateWatchSettings(true, false, elsewhere, true, [], string.Empty)));
+        Check("only the ticked gate fires", GateMatcher.ShouldAnnounce(cliffhanger, new GateWatchSettings(true, true, inSaucer, false, ["Cliffhanger"], string.Empty)));
+        Check("a GATE that is not ticked stays quiet", !GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, ["Cliffhanger"], string.Empty)));
+        Check("several ticked gates all fire", GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, ["Cliffhanger", "Any Way the Wind Blows"], string.Empty)));
+        Check("custom comma list matches any token in it", GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, [], "cliffhanger, any way the wind")));
+        Check("custom comma list matches the second token", GateMatcher.ShouldAnnounce(new GateAnnouncement("The Slice Is Right", "the Round Square", Attendant, "x"), new GateWatchSettings(true, true, inSaucer, false, [], "cliffhanger, the slice")));
+        Check("an unlisted GATE stays quiet", !GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, [], "cliffhanger, the slice")));
+        Check("custom list is case-insensitive substring", GateMatcher.ShouldAnnounce(new GateAnnouncement("Leap of Faith", "the Event Square", Attendant, "x"), new GateWatchSettings(true, true, inSaucer, false, [], "leap")));
+        Check("semicolon separated customs drop short tokens", GateMatcher.CustomTokens("a; bee , ccc").SequenceEqual(["bee", "ccc"]));
+        Check("no match is a no-op", !GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, ["Cliffhanger"], "cliffhanger")));
+        Check("empty selected entry does not match everything", !GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, [""], string.Empty)));
+        Check("single-char custom token is ignored", !GateMatcher.ShouldAnnounce(wind, new GateWatchSettings(true, true, inSaucer, false, [], "a")));
+        Check("two-char custom token is ignored", !GateMatcher.ShouldAnnounce(new GateAnnouncement("Leap of Faith", "the Event Square", Attendant, "x"), new GateWatchSettings(true, true, inSaucer, false, [], "of")));
+        Check("IsAttendant is exact", GateAnnouncementParser.IsAttendant(Attendant));
+        Check("IsAttendant rejects substring spoof", !GateAnnouncementParser.IsAttendant("Not the Gold Saucer Attendant"));
+
+        // ---- gaps: location fallback, whitespace handling, null names ----
+        Check("missing location reads as the Gold Saucer", new GateAnnouncement("Cliffhanger", " ", Attendant, "x").DisplayLocation == "the Gold Saucer");
+        Check("announced location is shown as-is", cliffhanger.DisplayLocation == "the Event Square");
+        Parses(Attendant, "A limited-time event \u201c  Leap   of Faith \u201d is now underway in   the  Event Square!!",
+            "Leap of Faith", "the Event Square");
+        Parses(Attendant, "\u3000A limited-time event \u201cCliffhanger\u201d is now underway in the Event Square.\u3000",
+            "Cliffhanger", "the Event Square");
+        Check("selected entries are trimmed before comparing", GateMatcher.IsWatched("Cliffhanger", false, ["  cliffhanger "], null));
+        Check("blank gate name is never watched, even with every GATE on", !GateMatcher.IsWatched("  ", true, null, null));
+        Check("null selected list and csv are safe", !GateMatcher.IsWatched("Cliffhanger", false, null, null));
+        Check("null announcement says nothing", !GateMatcher.ShouldAnnounce(null, new GateWatchSettings(true, false, inSaucer, true, [], string.Empty)));
+
+        Console.WriteLine($"\n{passed} passed, {failed} failed");
+        return failed == 0 ? 0 : 1;
+    }
+
+    private static void Parses(string sender, string message, string expectedName, string expectedLocation, IReadOnlyCollection<string>? extra = null)
+    {
+        if (!GateAnnouncementParser.TryParse(sender, message, out var parsed, extra))
+        {
+            Fail($"parse \"{Shorten(message)}\" -> expected {expectedName}, got nothing");
+            return;
+        }
+
+        var nameOk = parsed.GateName == expectedName;
+        var locationOk = parsed.Location == expectedLocation;
+        if (nameOk && locationOk)
+            Pass($"parse \"{Shorten(message)}\" -> {parsed.GateName} @ {parsed.Location}");
+        else
+            Fail($"parse \"{Shorten(message)}\" -> got {parsed.GateName} @ \"{parsed.Location}\", wanted {expectedName} @ \"{expectedLocation}\"");
+    }
+
+    private static void Rejects(string sender, string message, IReadOnlyCollection<string>? extra = null)
+    {
+        if (GateAnnouncementParser.TryParse(sender, message, out var parsed, extra))
+            Fail($"\"{Shorten(message)}\" from {sender ?? "(null)"} should be ignored, parsed as {parsed.GateName}");
+        else
+            Pass($"ignored \"{Shorten(message)}\" from {sender ?? "(null)"}");
+    }
+
+    private static void Check(string what, bool ok)
+    {
+        if (ok)
+            Pass(what);
+        else
+            Fail(what);
+    }
+
+    private static void Pass(string what)
+    {
+        passed++;
+        Console.WriteLine($"  ok   {what}");
+    }
+
+    private static void Fail(string what)
+    {
+        failed++;
+        Console.WriteLine($"  FAIL {what}");
+    }
+
+    private static string Shorten(string value) => value.Length <= 58 ? value : value[..55] + "...";
+}
