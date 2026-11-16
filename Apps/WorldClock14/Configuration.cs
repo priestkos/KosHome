@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+using Dalamud.Configuration;
+using Newtonsoft.Json;
+
+namespace KosHome.Apps.WorldClock14;
+
+/// <summary>
+/// Everything is a preference: which zones the window shows, the zone the typed time is read in,
+/// and how the copied line is formatted. Nothing here is ever written back into the game.
+/// </summary>
+[Serializable]
+public sealed class Configuration : IPluginConfiguration
+{
+    public int Version { get; set; } = 1;
+
+    /// <summary>Target zones, in the order they appear in the window and in the copied line.</summary>
+    // Replace, not Populate: Newtonsoft would otherwise append saved zones onto the defaults on every load.
+    [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
+    public List<TimeZoneEntry> Zones { get; set; } = Defaults.CreateZones();
+
+    /// <summary>The zone a typed time is read as. Defaults to whatever Windows is set to.</summary>
+    public TimeZoneEntry BaseZone { get; set; } = TimeZoneEntry.Local("Local");
+
+    public FormatOptions Format { get; set; } = new();
+
+    /// <summary>Put the converted line on the clipboard when /tz is given a time as well as the window button.</summary>
+    public bool CopyFromCommand { get; set; } = true;
+
+    /// <summary>Print the converted line to /xllog when /tz is given a time.</summary>
+    public bool LogFromCommand { get; set; } = true;
+
+    public void Save() => AppConfig.Save(Plugin.PluginInterface, "WorldClock14", this);
+
+    /// <summary>
+    /// Repairs anything a hand-edited or half-written config could be missing, so the window can never
+    /// be left with a null collection to draw from.
+    /// </summary>
+    public void Normalize()
+    {
+        if (Zones is null)
+        {
+            Zones = Defaults.CreateZones();
+        }
+        else
+        {
+            Zones.RemoveAll(static zone => zone is null);
+            if (Zones.Count == 0) Zones = Defaults.CreateZones();
+        }
+
+        foreach (var zone in Zones)
+        {
+            zone.Label ??= string.Empty;
+            zone.Id ??= string.Empty;
+            if (zone.IsFixed)
+                zone.FixedOffsetMinutes = ZoneResolver.ClampFixedOffset(zone.FixedOffsetMinutes);
+        }
+
+        BaseZone ??= TimeZoneEntry.Local("Local");
+        BaseZone.Label ??= string.Empty;
+        BaseZone.Id ??= string.Empty;
+        if (BaseZone.IsFixed)
+            BaseZone.FixedOffsetMinutes = ZoneResolver.ClampFixedOffset(BaseZone.FixedOffsetMinutes);
+
+        Format ??= new FormatOptions();
+        Format.Separator ??= " | ";
+        Format.Prefix ??= string.Empty;
+        Format.Suffix ??= string.Empty;
+    }
+}
