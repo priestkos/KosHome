@@ -73,7 +73,7 @@ public sealed class MainWindow : Window
         windowStyle = new ImRaii.StyleDisposable();
         windowStyle.Push(ImGuiStyleVar.WindowRounding, 18 * S);
         windowStyle.Push(ImGuiStyleVar.WindowBorderSize, 1 * S);
-        windowStyle.Push(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * Motion.EaseOutCubic(fade));
+        windowStyle.Push(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * Motion.OpenAlpha(fade));
     }
 
     /// <summary>Dalamud calls this whenever it called PreDraw, so everything PreDraw pushed is always popped.</summary>

@@ -10,6 +10,10 @@ internal static class Motion
     public static float Approach(float current, float target, float dt, float rate) =>
         target + (current - target) * MathF.Exp(-rate * dt);
 
+    /// <summary>Window alpha during the open fade. Never 0: ImGui hides a window whose style alpha is 0 at Begin(),
+    /// Dalamud then skips Draw(), and the fade (advanced in Draw) would stay at 0 for good.</summary>
+    public static float OpenAlpha(float fade) => MathF.Max(0.01f, EaseOutCubic(fade));
+
     public static float EaseOutCubic(float t)
     {
         var u = 1 - Math.Clamp(t, 0f, 1f);

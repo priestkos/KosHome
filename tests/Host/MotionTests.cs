@@ -88,6 +88,14 @@ public class MotionTests
     }
 
     [Fact]
+    public void OpenFadeNeverHidesTheWindow()
+    {
+        Assert.Equal(0, Motion.EaseOutCubic(0)); // the old window alpha on open: ImGui hides it, Draw() never runs
+        Assert.True(Motion.OpenAlpha(0) > 0);
+        Assert.Equal(1, Motion.OpenAlpha(1));
+    }
+
+    [Fact]
     public void StaggerDelaysEachItem()
     {
         Assert.Equal(0, Motion.Stagger(0.1f, 3, 0.05f, 0.4f));
