@@ -138,14 +138,14 @@ A host xUnit suite (60 tests: settings migration, type allowlist, animation math
 and ten app suites from the standalone plugins. All eleven run in CI before the build.
 
 ```
-pwsh tests/run-all.ps1    # 11 test projects; needs PowerShell 7
+powershell -File tests/run-all.ps1    # 11 test projects
 ```
 
 ## Limits
 
 - Not verified in game for this README; the media are mock-ups drawn from the code.
 - App windows show only inside the tablet: closing or folding the tablet closes them.
-- Home does not scroll: make a small tablet taller if icons are cut off.
+- Home has no scrollbar: in a short tablet, scroll the mouse wheel to reach icons below the edge.
 - Frosted glass is skipped for a window popped out of the game window.
 - The no-network test scans KosHome.dll only, not the bundled Penumbra and Glamourer API libraries.
 

@@ -7,7 +7,7 @@ if ($projects.Count -ne $expected) { throw "Expected $expected test projects, fo
 
 $failed = @()
 foreach ($p in $projects) {
-    $rel = [IO.Path]::GetRelativePath($PSScriptRoot, $p.FullName)
+    $rel = $p.FullName.Substring($PSScriptRoot.Length + 1)  # not GetRelativePath: Windows PowerShell 5.1 lacks it
     if (Select-String -LiteralPath $p.FullName -Pattern 'xunit' -Quiet) {
         Write-Host "== $rel (dotnet test)"
         dotnet test $p.FullName -c Release

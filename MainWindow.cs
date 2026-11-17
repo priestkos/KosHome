@@ -203,7 +203,12 @@ public sealed class MainWindow : Window
         ImGui.SetCursorPos(start + new Vector2((1 - e) * 36 * S * pageDirection, 0));
         using (ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * (0.15f + 0.85f * e)))
         using (var child = ImRaii.Child("##page", size, false, ImGuiWindowFlags.NoBackground
-                   | (page is Page.Home or Page.App ? ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse : 0)))
+                   | page switch
+                   {
+                       Page.App => ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse,
+                       Page.Home => ImGuiWindowFlags.NoScrollbar, // the wheel still scrolls icons below a short window
+                       _ => 0,
+                   }))
         {
             if (child)
             {
@@ -317,7 +322,8 @@ public sealed class MainWindow : Window
     {
         var draw = ImGui.GetWindowDrawList();
         var width = ImGui.GetContentRegionAvail().X;
-        var height = 96 * S;
+        var line = ImGui.GetTextLineHeight();
+        var height = MathF.Max(96 * S, 40 * S + 4 * line); // right column: time, Eorzea, running, pips, never overlapping
         var min = ImGui.GetCursorScreenPos() + new Vector2(0, 2 * S);
         var max = min + new Vector2(width, height);
         var colors = ImGui.GetStyle().Colors;
@@ -351,7 +357,6 @@ public sealed class MainWindow : Window
             draw.AddText(new Vector2(min.X + pad, min.Y + 14 * S), ImGui.GetColorU32(ink with { W = e }), time);
         }
 
-        var line = ImGui.GetTextLineHeight();
         draw.AddText(new Vector2(min.X + pad, min.Y + 16 * S + timeSize.Y), ImGui.GetColorU32(ink with { W = 0.6f * e }), now.ToString("dddd d MMMM"));
 
         // Right column: Eorzea time and how many apps are running.

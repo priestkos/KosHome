@@ -97,16 +97,16 @@ body { position: relative; }
     linear-gradient(180deg, rgba(221, 226, 241, 0.03) 0, rgba(221, 226, 241, 0.03) 43px, transparent 43px),
     rgba(221, 226, 241, 0.06);
 }
-.clock { height: 96px; margin-top: 2px; margin-bottom: 14px; }
+.clock { height: 108px; margin-top: 2px; margin-bottom: 14px; }
 .clock .time { position: absolute; left: 16px; top: 8px; font-size: 40px; font-weight: 500; letter-spacing: 0.5px; line-height: 44px; }
 .clock .date { position: absolute; left: 16px; top: 58px; opacity: 0.6; }
 /* MainWindow.DrawClockCard: ET at +16, its label one line + 2 below, the running count one line + 2 above the pips
-   (pips on max - 16 - line/2); positions for a 16 px line. */
+   (pips on max - 16 - line/2); card height max(96, 40 + 4 * line) = 108 for a 17 px line. */
 .clock .et { position: absolute; right: 16px; top: 16px; line-height: 16px; }
 .clock .et .sun { color: var(--primary); margin-right: 4px; font-size: 12px; }
 .clock .etl { position: absolute; right: 16px; top: 34px; line-height: 16px; opacity: 0.6; }
-.clock .runl { position: absolute; right: 16px; top: 46px; line-height: 16px; opacity: 0.6; }
-.clock .pips { position: absolute; right: 16px; top: 64px; }
+.clock .runl { position: absolute; right: 16px; top: 56px; line-height: 16px; opacity: 0.6; }
+.clock .pips { position: absolute; right: 16px; top: 75px; }
 .pips { display: inline-flex; gap: 3px; justify-content: flex-end; height: var(--line); align-items: center; }
 .pip { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(221, 226, 241, 0.35); }
 .pip.on { background: var(--primary); border-color: var(--primary); }
