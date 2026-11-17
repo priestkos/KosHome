@@ -6,7 +6,11 @@ namespace KosHome;
 /// [PluginService] members are injected exactly as they were when it was a plugin of its own.</summary>
 public interface IKosApp : IDisposable
 {
-    void OpenMain();
+    /// <summary>A tap on the home screen: opens the app's main window, or closes it when it is already open.</summary>
+    void ToggleMain();
+
+    /// <summary>Whether the main window is open now (the running dot under its icon; Open or Close on the Apps page).</summary>
+    bool MainOpen { get; }
 
     void OpenSettings();
 }

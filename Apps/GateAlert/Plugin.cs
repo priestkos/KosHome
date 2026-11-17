@@ -94,7 +94,9 @@ public sealed class GateAlertPlugin : IKosApp
     private void OnTestCommand(string command, string args) =>
         this.watcher.FireTest(args.Trim(), "the Event Square");
 
-    public void OpenMain() => this.configWindow.IsOpen = true;
+    public void ToggleMain() => this.configWindow.Toggle();
+
+    public bool MainOpen => this.configWindow.IsOpen;
 
     public void OpenSettings() => this.configWindow.IsOpen = true;
 

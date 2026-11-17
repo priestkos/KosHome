@@ -402,7 +402,9 @@ public sealed class Plugin : IKosApp
 
     private void ToggleConfig() => configWindow.Toggle();
 
-    public void OpenMain() => ToggleMain();
+    void IKosApp.ToggleMain() => ToggleMain();
+
+    public bool MainOpen => mainWindow.IsOpen;
 
     public void OpenSettings() => ToggleConfig();
 

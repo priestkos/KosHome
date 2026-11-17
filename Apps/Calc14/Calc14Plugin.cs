@@ -40,7 +40,9 @@ public sealed class Calc14Plugin : IKosApp
         windowSystem.RemoveAllWindows();
     }
 
-    public void OpenMain() => calculatorWindow.Toggle();
+    public void ToggleMain() => calculatorWindow.Toggle();
+
+    public bool MainOpen => calculatorWindow.IsOpen;
 
     public void OpenSettings() => calculatorWindow.Toggle();
 

@@ -81,7 +81,9 @@ public sealed unsafe class Plugin : IKosApp
         this.RestoreAll();
     }
 
-    public void OpenMain() => this.windowOpen = true;
+    public void ToggleMain() => this.windowOpen = !this.windowOpen;
+
+    public bool MainOpen => this.windowOpen;
 
     public void OpenSettings() => this.windowOpen = true;
 

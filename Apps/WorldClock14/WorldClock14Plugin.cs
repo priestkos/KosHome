@@ -68,7 +68,9 @@ public sealed class Plugin : IKosApp
         configWindow.Dispose();
     }
 
-    public void OpenMain() => ToggleMain();
+    void IKosApp.ToggleMain() => ToggleMain();
+
+    public bool MainOpen => mainWindow.IsOpen;
 
     public void OpenSettings() => ToggleConfig();
 

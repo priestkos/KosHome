@@ -21,10 +21,17 @@ and off from one window, laid out like a tablet: a home screen of app icons on f
 | Wardrobe14 | `/pmm` | A cross-collection view of your Penumbra mods. |
 | WorldClock14 | `/tz`, `/tzconfig` | One time, every timezone, one click to chat. |
 
-All apps start switched on. In `/koshome`, click an icon to open the app (an app that is off is switched on first);
-right-click it for Open, Settings and Switch off. The **Apps** tile lists every app with a switch and its buttons, and
-the frosted-glass switch. An orange dot on an icon means the app isn't running and says why on hover. Switching an app
-off removes its commands and windows until you switch it back on.
+All apps start switched on. `/koshome` opens the tablet:
+
+- **Home:** a clock card (local time, Eorzea time, how many apps are running) and the app icons. Click an icon to open
+  the app and again to close it; an app that is off is switched on first. A small light under an icon means its window
+  is open; an orange dot means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and
+  Switch off.
+- **Dock:** Home, Apps (every app with its switch, Open/Close and Settings buttons) and KosHome Settings.
+- **KosHome Settings** (also the cog in `/xlplugins`): window opacity, frosted glass, the glow wallpaper and animations.
+  Animations also stay off while Dalamud's Reduce motion is on.
+
+Switching an app off removes its commands and windows until you switch it back on.
 
 The look comes from [KosLib](https://github.com/priestkos/KosLib) (source-included as a git submodule):
 `git clone --recurse-submodules`, or `git submodule update --init` in an existing clone.

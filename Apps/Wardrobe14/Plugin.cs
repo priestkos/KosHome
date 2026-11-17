@@ -50,7 +50,9 @@ public sealed class Plugin : IKosApp
         penumbra.Dispose();
     }
 
-    public void OpenMain() => mainWindow.Toggle();
+    public void ToggleMain() => mainWindow.Toggle();
+
+    public bool MainOpen => mainWindow.IsOpen;
 
     public void OpenSettings() => mainWindow.Toggle();
 

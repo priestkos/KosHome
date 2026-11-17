@@ -216,7 +216,9 @@ public sealed class Plugin : IKosApp
 
     private void ToggleMain() => mainWindow.Toggle();
 
-    public void OpenMain() => ToggleMain();
+    void IKosApp.ToggleMain() => ToggleMain();
+
+    public bool MainOpen => mainWindow.IsOpen;
 
     public void OpenSettings() => ToggleMain();
 }

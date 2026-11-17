@@ -99,7 +99,9 @@ public sealed class Plugin : IKosApp
         this.ToggleMainUi();
     }
 
-    public void OpenMain() => this.ToggleMainUi();
+    public void ToggleMain() => this.ToggleMainUi();
+
+    public bool MainOpen => this.mainWindow.IsOpen;
 
     public void OpenSettings() => this.ToggleConfigUi();
 

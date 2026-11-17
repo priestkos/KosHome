@@ -104,7 +104,9 @@ public sealed class Plugin : IKosApp
         windowSystem.RemoveAllWindows();
     }
 
-    public void OpenMain() => window.Toggle();
+    public void ToggleMain() => window.Toggle();
+
+    public bool MainOpen => window.IsOpen;
 
     public void OpenSettings() => window.OpenSettings();
 
