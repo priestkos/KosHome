@@ -1,7 +1,7 @@
 # Runs every test project under tests/: xUnit projects with `dotnet test`, console harnesses with `dotnet run`
 # (each returns a non-zero exit code on failure). The host tests need the Dalamud dev distribution installed.
 $ErrorActionPreference = 'Stop'
-$expected = 11  # 1 host + 10 app suites; a missing project must fail the run, not shrink it
+$expected = 12  # 1 host + 11 app suites; a missing project must fail the run, not shrink it
 $projects = @(Get-ChildItem -Path $PSScriptRoot -Recurse -Filter '*.csproj' | Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } | Sort-Object FullName)
 if ($projects.Count -ne $expected) { throw "Expected $expected test projects, found $($projects.Count)" }
 

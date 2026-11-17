@@ -12,6 +12,8 @@ internal static class AppCatalog
             pi => pi.Create<Apps.FrontlineAdvisor.Plugin>()),
         new("GateAlert", "Gate Alert", "Yells at you the moment your GATE opens in the Gold Saucer.", "/gatealert, /gatetest", true,
             pi => pi.Create<Apps.GateAlert.GateAlertPlugin>()),
+        new("KeyLock", "KeyLock", "Moves movement off WASD and jump off Space on demand, and puts them back.", "/keylock", false,
+            pi => pi.Create<Apps.KeyLock.Plugin>()),
         new("NameplateOffset", "Nameplate Offset", "Raise or lower the nameplate above a character's head.", "/npoffset", false,
             pi => pi.Create<Apps.NameplateOffset.Plugin>()),
         new("Quill14", "Quill14", "Roleplay posts: smart splitting, markup, templates and paced sending to Say, Party, Tell or Reply.", "/quill", true,

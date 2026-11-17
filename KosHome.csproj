@@ -1,7 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
     <Version>1.0.0</Version>
-    <Description>One home for the PriestKos plugin tools: Aetherpath, Calc14, FrontlineAdvisor, GateAlert, NameplateOffset, Quill14, VenueLedger, Wardrobe14 and WorldClock14 as apps you switch on and off from one window.</Description>
+    <Description>One home for the PriestKos plugin tools: Aetherpath, Calc14, FrontlineAdvisor, GateAlert, KeyLock, NameplateOffset, Quill14, VenueLedger, Wardrobe14 and WorldClock14 as apps you switch on and off from one window.</Description>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <LangVersion>latest</LangVersion>

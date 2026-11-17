@@ -2,7 +2,7 @@
 
 # KosHome
 
-One home for the PriestKos plugin tools. Nine former standalone Dalamud plugins live here as **apps** you switch on
+One home for the PriestKos plugin tools. Ten former standalone Dalamud plugins live here as **apps** you switch on
 and off from one window, laid out like a tablet: a home screen of app icons on frosted glass.
 
 `/koshome` · Dalamud API 15 · .NET 10
@@ -37,6 +37,7 @@ A short **mock-up** walkthrough (not real gameplay) cross-fades through the same
 | Calc14 | A fast, pretty calculator. |
 | FrontlineAdvisor | Who is winning, who to hit, who is about to matter. |
 | Gate Alert | Yells at you the moment your GATE opens in the Gold Saucer. |
+| KeyLock | Moves movement off WASD and jump off Space on demand, and puts them back. |
 | Nameplate Offset | Raise or lower the nameplate above a character's head. |
 | Quill14 | Roleplay posts: smart splitting, markup, templates and paced sending. |
 | VenueLedger | Every venue you know, on one clock. |
@@ -44,7 +45,7 @@ A short **mock-up** walkthrough (not real gameplay) cross-fades through the same
 | WorldClock14 | A home-screen widget: your timezones live, one click to copy for chat. |
 
 - **All apps start switched on.** Switching one off removes its commands and windows until it is back on.
-- **Home** has a clock card (local time, Eorzea time, "N of 9 running"), the WorldClock14 widget (click a zone to copy
+- **Home** has a clock card (local time, Eorzea time, "N of 10 running"), the WorldClock14 widget (click a zone to copy
   it for chat; buttons copy all, open the `/tz` converter and its settings) and an icon per app that is switched on. **Apps that are switched off are not
   shown on Home**; when every app is off, Home says "Every app is switched off. Switch them on in Apps (the dock)."
 - **Icons:** click to open the app. A light under the name means its window is open; a dimmed icon with an orange dot
@@ -93,6 +94,7 @@ The look is KosLib's Material style; frosted glass uses Dalamud's blur. [KosLib]
 | `/fla` | FrontlineAdvisor; `on`, `off`, `team <mael\|adder\|flame\|auto>`, `map <name\|auto>`, `dump`, `test`, `config` |
 | `/gatealert` | Gate Alert; `on`, `off`, `test [GATE name]` |
 | `/gatetest [GATE name]` | Fire a test GATE alert |
+| `/keylock` | KeyLock: swap movement to the arrow keys and clear Space from Jump, or restore when swapped; `on`, `off`/`restore`, `status` |
 | `/npoffset [yalms]` | Nameplate Offset; a number sets the height (−1.5 to 3; `0` resets) |
 | `/quill` | Quill14; `<template>` inserts it, `send <template>`, `ooc <text>`, `next`, `stop`, `probe` |
 | `/venue` | VenueLedger; `copy`, `export`, `list`, `help` |
@@ -135,10 +137,10 @@ dotnet build -c Release    # zip in bin/Release/KosHome/latest.zip
 ## Tests
 
 A host xUnit suite (60 tests: settings migration, type allowlist, animation maths, window tracking, no-network scan)
-and ten app suites from the standalone plugins. All eleven run in CI before the build.
+and eleven app suites from the standalone plugins. All twelve run in CI before the build.
 
 ```
-powershell -File tests/run-all.ps1    # 11 test projects
+powershell -File tests/run-all.ps1    # 12 test projects
 ```
 
 ## Limits
@@ -157,7 +159,7 @@ MainWindow.cs        the tablet: pages, dock, quick launcher
 SettingsPage.cs      KosHome Settings
 Configuration.cs     tablet settings, switched-off apps, shortcuts
 Host/                app contract, catalog, per-app settings, motion
-Apps/<Name>/         the nine apps
+Apps/<Name>/         the ten apps
 Assets/Apps/         app icons
 KosLib/              UI library (git submodule)
 tests/               test suites, run-all.ps1

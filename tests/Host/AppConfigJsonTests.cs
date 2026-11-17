@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Xunit;
 using Quill = KosHome.Apps.Quill14;
 using Clock = KosHome.Apps.WorldClock14;
+using Lock = KosHome.Apps.KeyLock;
 
 namespace KosHome.Host.Tests;
 
@@ -87,8 +88,8 @@ public class AppConfigJsonTests
                   .Select(a => new object[] { a.Id });
 
     [Fact]
-    public void EightOfNineAppsHaveSettings() =>
-        Assert.Equal((9, 8), (AppCatalog.All.Length, Apps().Count()));
+    public void NineOfTenAppsHaveSettings() =>
+        Assert.Equal((10, 9), (AppCatalog.All.Length, Apps().Count()));
 
     [Theory]
     [MemberData(nameof(Apps))]
@@ -130,6 +131,19 @@ public class AppConfigJsonTests
         var loaded = typeof(AppConfigJson).GetMethod(nameof(AppConfigJson.Deserialize))!.MakeGenericMethod(type)
                                           .Invoke(null, [File.ReadAllText(path), appId]);
         Assert.IsType(type, loaded);
+    }
+
+    [Fact]
+    public void KeyLockSavedOriginalsSurviveTheMove()
+    {
+        // The saved pre-swap binds are the only way back to the player's keys; a migration that drops them strands a swap.
+        var bind = new byte[] { 0x57, 0, 0x26, 0, 1, 2, 3, 4, 0, 0, 0 };
+        var mine = new Lock.Configuration { Characters = { [0x1234_5678_9ABCUL] = new() { [321] = bind } } };
+        var old = AppConfigJson.Serialize(mine)
+                               .Replace("\"KosHome.Apps.KeyLock.Configuration, KosHome\"", "\"KeyLock.Configuration, KeyLock\"");
+        Assert.Contains("\"KeyLock.Configuration, KeyLock\"", old); // control: the JSON really carries the old name
+        var back = AppConfigJson.Deserialize<Lock.Configuration>(old, "KeyLock")!;
+        Assert.Equal(bind, back.Characters[0x1234_5678_9ABCUL][321]);
     }
 
     [Fact]

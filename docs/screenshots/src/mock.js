@@ -9,6 +9,7 @@
     { id: "Calc14", name: "Calc14", summary: "A fast, pretty calculator.", commands: "/calc", settings: false },
     { id: "FrontlineAdvisor", name: "FrontlineAdvisor", summary: "Who is winning, who to hit, who is about to matter.", commands: "/fla", settings: true },
     { id: "GateAlert", name: "Gate Alert", summary: "Yells at you the moment your GATE opens in the Gold Saucer.", commands: "/gatealert, /gatetest", settings: true },
+    { id: "KeyLock", name: "KeyLock", summary: "Moves movement off WASD and jump off Space on demand, and puts them back.", commands: "/keylock", settings: false },
     { id: "NameplateOffset", name: "Nameplate Offset", summary: "Raise or lower the nameplate above a character's head.", commands: "/npoffset", settings: false },
     { id: "Quill14", name: "Quill14", summary: "Roleplay posts: smart splitting, markup, templates and paced sending to Say, Party, Tell or Reply.", commands: "/quill", settings: true },
     { id: "VenueLedger", name: "VenueLedger", summary: "Every venue you know, on one clock.", commands: "/venue", settings: false },
