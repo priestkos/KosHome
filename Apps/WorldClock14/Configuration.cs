@@ -56,6 +56,11 @@ public sealed class Configuration : IPluginConfiguration
                 zone.FixedOffsetMinutes = ZoneResolver.ClampFixedOffset(zone.FixedOffsetMinutes);
         }
 
+        // The standalone plugin's loader appended the saved zones to the seeded defaults, so old settings files carry
+        // the list twice. An exact repeat shows the same row twice and adds nothing, so only the first is kept.
+        var seen = new HashSet<(string, string, bool, int, bool, bool)>();
+        Zones.RemoveAll(z => !seen.Add((z.Label, z.Id, z.IsFixed, z.FixedOffsetMinutes, z.IsLocal, z.Enabled)));
+
         BaseZone ??= TimeZoneEntry.Local("Local");
         BaseZone.Label ??= string.Empty;
         BaseZone.Id ??= string.Empty;

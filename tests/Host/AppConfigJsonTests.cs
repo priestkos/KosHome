@@ -131,4 +131,17 @@ public class AppConfigJsonTests
                                           .Invoke(null, [File.ReadAllText(path), appId]);
         Assert.IsType(type, loaded);
     }
+
+    [Fact]
+    public void WorldClockDropsExactRepeatZonesKeepingOrder()
+    {
+        // The standalone plugin saved its seeded zones twice over (IST JST UTC ET IST JST UTC ET).
+        var c = new Clock.Configuration { Zones = [.. Clock.Defaults.CreateZones(), .. Clock.Defaults.CreateZones()] };
+        var offTwin = Clock.TimeZoneEntry.Iana("JST", "Asia/Tokyo");
+        offTwin.Enabled = false; // differs in one field, so it is the user's own entry and stays
+        c.Zones.Add(offTwin);
+        c.Normalize();
+        Assert.Equal(["IST", "JST", "UTC", "ET", "JST"], c.Zones.Select(z => z.Label));
+        Assert.False(c.Zones[^1].Enabled);
+    }
 }

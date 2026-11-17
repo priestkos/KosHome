@@ -19,5 +19,9 @@ public interface IKosApp : IDisposable
 /// Drawn inside KosHome's window, in a glass card the host provides.</summary>
 public interface IKosWidget
 {
-    void DrawWidget();
+    void DrawWidget(WidgetFrame frame);
 }
+
+/// <summary>What the host tells a widget about its card: the inner width to lay out in (the window's content region is
+/// wider than the card, so a widget must never measure against it), and the clock card's large display font.</summary>
+public readonly record struct WidgetFrame(float Width, Dalamud.Interface.ManagedFontAtlas.IFontHandle DisplayFont);

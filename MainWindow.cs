@@ -328,7 +328,7 @@ public sealed class MainWindow : Window
                 using (ImRaii.TextWrapPos(start.X - ImGui.GetWindowPos().X + width - pad.X))
                 {
                     ImGui.Dummy(new Vector2(width - 2 * pad.X, 0)); // the group is the card's full inner width
-                    widget.DrawWidget();
+                    widget.DrawWidget(new WidgetFrame(width - 2 * pad.X, plugin.ClockFont));
                 }
 
                 ImGui.PopItemWidth();

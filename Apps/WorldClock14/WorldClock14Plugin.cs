@@ -74,7 +74,7 @@ public sealed class Plugin : IKosApp, IKosWidget
 
     public void OpenSettings() => ToggleConfig();
 
-    public void DrawWidget() => mainWindow.DrawWidget(ToggleMain);
+    public void DrawWidget(WidgetFrame frame) => mainWindow.DrawWidget(frame, ToggleMain);
 
     private void OnDraw()
     {
