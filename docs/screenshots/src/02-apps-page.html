@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mock-up: Apps page</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div class="scene-label">Apps page: a switch per app, Open/Close and Settings, the reason an app is not running</div>
+    <div id="root"></div>
+    <div class="note" style="top: 170px; left: 640px"><b>Apps</b> (the dock's middle button) &mdash; every app with its commands and a switch. Switching an app off removes its commands and windows. Gate Alert stays stopped while the old GateAlert plugin is loaded; <b>Retry</b> starts it once that plugin is disabled.</div>
+    <script src="mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+      document.getElementById("root").innerHTML = KH.appsPage({ left: 110, top: 30, thumb: 210 }, S);
+    </script>
+  </body>
+</html>

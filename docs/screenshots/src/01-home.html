@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mock-up: Home</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div class="scene-label">Home: clock card, WorldClock14 widget, app icons (switched-off apps are hidden)</div>
+    <div id="root"></div>
+    <div class="note" style="top: 170px; left: 640px"><b>Home</b> &mdash; FrontlineAdvisor and Wardrobe14 are switched off, so they are not on Home (only on the Apps page). Gate Alert is dimmed with an orange dot: its old plugin is still loaded. The light under Quill14 means its window is open. Right-click an icon for Open/Close, Settings and Switch off.</div>
+    <script src="mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+      document.getElementById("root").innerHTML = KH.home({ left: 110, top: 30 }, S);
+    </script>
+  </body>
+</html>

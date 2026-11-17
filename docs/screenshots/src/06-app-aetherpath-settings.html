@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mock-up: Aetherpath settings tab</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div class="scene-label">An app with two windows: Aetherpath and its settings as tabs (tablet resized wider)</div>
+    <div id="root"></div>
+    <div class="note" style="top: 560px; left: 820px; max-width: 300px"><b>Window tabs</b> &mdash; an app with a main and a settings window shows both as tabs under its header.</div>
+    <script src="mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+
+      const chk = (on, label) => `<div class="check${on ? " on" : ""}"><span class="box"></span><span>${label}</span></div>`;
+      const inp = (v) => `<span class="input"><span class="val">${v}</span><span class="pm">-</span><span class="pm">+</span></span>`;
+      const AP =
+        `<div class="collapsing">&#x25BE; My travel slots</div>` +
+        `<div class="wrap">Aetherpath reads your free transfer and favored destinations from the game. Type values here to override them and price what-if setups - nothing here is written back to the game.</div>` +
+        chk(true, "Read slots from the game") +
+        `<div class="wrap" style="margin-top:4px">Override: free destination <span class="grey">(aetheryte id, 0 = none)</span></div>` +
+        `<div class="row">${inp(0)}</div>` +
+        `<div class="wrap">Override: home point (Return)</div><div class="row">${inp(0)}</div>` +
+        `<div class="wrap">Override: favored destinations (ids) <span class="grey">(4th slot needs the Companion app unlock)</span></div>` +
+        `<div class="row">${inp(0)}${inp(0)}${inp(0)}${inp(0)}</div>` +
+        `<div class="collapsing">&#x25BE; Travel options to price</div>` +
+        ["Plain teleport", "Free destination", "Favored slots", "Return to home point", "Aetheryte tickets", "Estate / apartment teleports", "Teleport to a neighbour, then walk in"].map((l) => chk(true, l)).join("");
+      document.getElementById("root").innerHTML = KH.appPage({ left: 60, top: 30, width: 720 }, "Aetherpath", AP, ["Aetherpath", "Aetherpath settings"], 1);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mock-up: KosHome Settings</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div class="scene-label">KosHome Settings: window, motion, quick launcher shortcuts</div>
+    <div id="root"></div>
+    <div class="note" style="top: 170px; left: 640px"><b>KosHome Settings</b> (the dock's cog, or the cog in <code>/xlplugins</code>) &mdash; opacity 20&ndash;100% (default 85%), frosted glass, the glow wallpaper and animations; the ticked apps are the quick launcher's shortcuts. <b>Reset look</b> puts the four look settings back; the shortcuts stay. Each app keeps its own settings.</div>
+    <script src="mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+      document.getElementById("root").innerHTML = KH.settingsPage({ left: 110, top: 30 }, S);
+    </script>
+  </body>
+</html>

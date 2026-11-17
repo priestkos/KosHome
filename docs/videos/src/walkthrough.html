@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>KosHome mock-up walkthrough</title>
+    <link rel="stylesheet" href="../../screenshots/src/common.css" />
+    <style>
+      .scene { position: absolute; inset: 0; opacity: 0; pointer-events: none; will-change: opacity, transform; }
+      .video-caption {
+        position: absolute; bottom: 0; left: 0; right: 0; z-index: 9000; padding: 14px 20px;
+        font-size: 17px; font-weight: 600; text-align: center; color: #fff;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.5) 70%, transparent 100%);
+        text-shadow: 0 1px 4px #000;
+      }
+      .mockup-banner { font-size: 14px; padding: 8px 16px; }
+      .note { top: 200px; left: 640px; }
+    </style>
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div id="scenes"></div>
+    <div class="video-caption" id="caption"></div>
+    <script src="../../screenshots/src/mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+      const at = { left: 110, top: 20 };
+      // Configuration.DefaultQuickApps, drawn in catalog order (MainWindow.DrawLauncher).
+      const quick = KH.APPS.filter((a) => ["Calc14", "Quill14", "Aetherpath", "WorldClock14"].includes(a.id));
+      const launcher =
+        `<div class="launcher" style="left:110px;top:60px">
+          <div class="round">&#x2922;</div>
+          ${quick.map((a) => `<img src="${KH.icon(a.id)}">`).join("")}
+          <div class="round">&#x2715;</div>
+        </div>`;
+
+      const beats = [
+        { start: 0.0, end: 2.9, caption: "Home: the clock card, the WorldClock14 widget and every app that is switched on",
+          html: KH.home(at, S),
+          note: "FrontlineAdvisor and Wardrobe14 are switched off, so Home leaves them out." },
+        { start: 2.5, end: 5.4, caption: "Apps page: a switch per app; an app switched off leaves Home",
+          html: KH.appsPage({ ...at, thumb: 210 }, { ...S, toast: { id: "Wardrobe14", text: "switched off" } }), scroll: 470,
+          note: "The island says what just happened: Wardrobe14 switched off." },
+        { start: 5.0, end: 7.9, caption: "Tap an icon: the app opens inside the tablet",
+          html: KH.appPage({ ...at, toast: { id: "Calc14", text: "opened" } }, "Calc14",
+            KH.calcBody({ display: "15000", history: ["1250 \u00d7 12 = 15000", "70000/4 = 17500"] })),
+          note: "Header: Home (the app stays open), the app, close." },
+        { start: 7.5, end: 10.4, caption: "KosHome Settings: opacity, frosted glass, glow wallpaper, animations, shortcuts",
+          html: KH.settingsPage(at, S), note: "Also the cog in /xlplugins." },
+        { start: 10.0, end: 12.6, caption: "Quick launcher: the arrows fold the tablet into a bar of shortcuts",
+          html: launcher, note: "A shortcut opens its app and unfolds the tablet." },
+        { start: 12.2, end: 15.0, caption: "Every app switched off: Home points you to the Apps page",
+          html: KH.home(at, { disabled: KH.APPS.map((a) => a.id) }), note: "0 of 9 running." },
+      ];
+
+      const root = document.getElementById("scenes");
+      const scenes = beats.map((b, i) => {
+        const el = document.createElement("div");
+        el.className = "scene";
+        el.id = `scene${i + 1}`;
+        el.innerHTML = b.html + `<div class="note">${KH.esc(b.note)}</div>`;
+        root.appendChild(el);
+        if (b.scroll) el.querySelector(".page").scrollTop = b.scroll;
+        return el;
+      });
+      const caption = document.getElementById("caption");
+      const FADE = 0.4;
+
+      window.seekWalkthrough = (t) => {
+        let best = 0, bestOp = -1;
+        beats.forEach((b, i) => {
+          let op = 0;
+          if (t >= b.start && t <= b.end) {
+            op = Math.min(1, (t - b.start) / FADE, (b.end - t) / FADE);
+            if (b.start === 0) op = Math.min(1, (b.end - t) / FADE);
+            if (b.end === 15.0) op = Math.min(1, (t - b.start) / FADE);
+          }
+          const el = scenes[i];
+          el.style.opacity = op;
+          el.style.transform = `translateX(${(1 - op) * 36}px)`; // the page slide (36 px, MainWindow.Draw)
+          if (op > bestOp) { bestOp = op; best = i; }
+        });
+        caption.textContent = beats[best].caption;
+      };
+      window.seekWalkthrough(0);
+    </script>
+  </body>
+</html>

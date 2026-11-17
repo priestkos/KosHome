@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mock-up: Calc14 inside the tablet</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="game-backdrop"></div>
+    <div class="mockup-banner">Mock-up</div>
+    <div class="scene-label">An app inside the tablet: Calc14 (/calc)</div>
+    <div id="root"></div>
+    <div class="note" style="top: 170px; left: 640px"><b>Apps open inside the tablet</b> &mdash; from an icon, a shortcut or the app's own command. The header has Home (the app stays open), the app's name and close. The island at the top says what just happened.</div>
+    <script src="mock.js"></script>
+    <script>
+      const S = { disabled: ["FrontlineAdvisor", "Wardrobe14"], status: { GateAlert: KH.BLOCKED("GateAlert") }, open: ["Quill14"] };
+      document.getElementById("root").innerHTML = KH.appPage({ left: 110, top: 30, toast: { id: "Calc14", text: "opened" } }, "Calc14", KH.calcBody({ display: "15000", history: ["1250 \u00d7 12 = 15000", "70000/4 = 17500", "3 \u00d7 4500 = 13500"] }));
+    </script>
+  </body>
+</html>

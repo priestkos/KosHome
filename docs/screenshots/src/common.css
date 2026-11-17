@@ -1,0 +1,213 @@
+/* KosHome mock-up chrome. Colours are KosLib's MaterialKos dark scheme for the KosMos accent (MaterialKos.Scheme,
+   computed from KosColor.Crimson / FoxfireGold / NightCard), which MainWindow.PreDraw pushes for the whole tablet. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary: #ffb3ad;
+  --on-primary: #680012;
+  --primary-container: #852126;
+  --sec-container: #653c39;
+  --sec-container-hover: #6f4744;
+  --tertiary: #e8c08d;
+  --surface: #0e131e;
+  --surface-low: #171c26;
+  --surface-high: #252a35;
+  --surface-highest: #303540;
+  --ink: #dde2f1;
+  --ink-variant: #bec6dc;
+  --outline: #8891a5;
+  --outline-variant: #3f4759;
+  --orange: #ffb500; /* ImGuiColors.DalamudOrange */
+  --line: 17px;
+  --frame: 23px;
+}
+
+html, body {
+  width: 1280px; height: 720px; overflow: hidden;
+  font-family: "Segoe UI", system-ui, sans-serif; font-size: 13.5px;
+  background: #0a0c10; color: var(--ink);
+}
+body { position: relative; }
+
+.mockup-banner {
+  position: absolute; top: 12px; right: 12px; z-index: 9999;
+  padding: 6px 14px; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #1a1200; background: linear-gradient(135deg, #f5c842, #e8a020);
+  border: 2px solid #fff3; border-radius: 4px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.scene-label {
+  position: absolute; bottom: 12px; left: 12px; z-index: 9998;
+  padding: 4px 10px; font-size: 11px; color: #aaa; background: rgba(0, 0, 0, 0.65); border-radius: 3px;
+}
+
+/* Not a game capture: a blurred, game-ish field behind the frosted tablet. */
+.game-backdrop {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 40% 35% at 75% 30%, #6a4a2a 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 25% 70%, #23405a 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 40%, #2a3548 0%, transparent 70%),
+    linear-gradient(180deg, #1a2230 0%, #0d1218 55%, #15100a 100%);
+}
+.game-backdrop::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+}
+
+/* Side annotation: explains the frame; not part of the plugin's UI. */
+.note {
+  position: absolute; max-width: 330px; padding: 10px 14px; font-size: 12.5px; line-height: 1.5; color: #ccc;
+  background: rgba(0, 0, 0, 0.7); border-left: 3px solid #f5c842; border-radius: 0 4px 4px 0;
+}
+.note b { color: #fff; }
+.note code { font-family: Consolas, ui-monospace, monospace; font-size: 12px; color: #f5d28a; }
+
+/* ---------------------------------------------------------------- tablet (MainWindow) */
+.tablet {
+  position: absolute; width: 460px; height: 650px; padding: 8px;
+  background: rgba(14, 19, 30, 0.85); /* Surface at the 0.85 default opacity (Configuration.DefaultOpacity) */
+  backdrop-filter: blur(6px);         /* KosTheme.Frost: Dalamud's blur-behind */
+  border: 1px solid var(--outline-variant); border-radius: 18px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.wallpaper { position: absolute; inset: 0; pointer-events: none; }
+.glow { position: absolute; border-radius: 50%; }
+
+.statusbar { position: relative; height: 24px; flex: none; margin-bottom: 6px; }
+.round {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(221, 226, 241, 0.10); color: var(--ink); line-height: 1;
+}
+.island {
+  position: absolute; left: 50%; top: 2px; height: 20px; transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.94); border-radius: 10px; display: flex; align-items: center; gap: 6px;
+  padding: 0 10px; color: #fff; font-size: 13px; white-space: nowrap; overflow: hidden;
+}
+.island .cam { position: absolute; right: 7px; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: #3a3a3a; }
+.island img { width: 16px; height: 16px; }
+
+.page { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.page.scroll { padding-right: 16px; }
+.scrollbar { position: absolute; right: 2px; top: 0; width: 8px; border-radius: 6px; background: rgba(136, 145, 165, 0.5); }
+
+.glass {
+  position: relative; border-radius: 16px; border: 1px solid rgba(221, 226, 241, 0.10);
+  background:
+    linear-gradient(180deg, rgba(221, 226, 241, 0.03) 0, rgba(221, 226, 241, 0.03) 43px, transparent 43px),
+    rgba(221, 226, 241, 0.06);
+}
+.clock { height: 96px; margin-top: 2px; margin-bottom: 14px; }
+.clock .time { position: absolute; left: 16px; top: 8px; font-size: 40px; font-weight: 500; letter-spacing: 0.5px; line-height: 44px; }
+.clock .date { position: absolute; left: 16px; top: 58px; opacity: 0.6; }
+/* MainWindow.DrawClockCard: ET at +16, its label one line + 2 below, the running count one line + 2 above the pips
+   (pips on max - 16 - line/2); positions for a 16 px line. */
+.clock .et { position: absolute; right: 16px; top: 16px; line-height: 16px; }
+.clock .et .sun { color: var(--primary); margin-right: 4px; font-size: 12px; }
+.clock .etl { position: absolute; right: 16px; top: 34px; line-height: 16px; opacity: 0.6; }
+.clock .runl { position: absolute; right: 16px; top: 46px; line-height: 16px; opacity: 0.6; }
+.clock .pips { position: absolute; right: 16px; top: 64px; }
+.pips { display: inline-flex; gap: 3px; justify-content: flex-end; height: var(--line); align-items: center; }
+.pip { width: 6px; height: 6px; border-radius: 50%; border: 1px solid rgba(221, 226, 241, 0.35); }
+.pip.on { background: var(--primary); border-color: var(--primary); }
+
+.widget { padding: 10px 14px; margin-bottom: 12px; }
+.wc-head { display: flex; align-items: center; height: var(--frame); }
+.wc-title { flex: 1; opacity: 0.6; letter-spacing: 0.02em; }
+.ghost { width: var(--frame); height: var(--frame); margin-left: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--ink); opacity: 0.8; font-size: 12px; }
+.wc-rows { margin-top: 4px; }
+.wc-row { position: relative; height: 31px; display: flex; align-items: center; border-top: 1px solid rgba(221, 226, 241, 0.07); }
+.wc-row:first-child { border-top: none; }
+.wc-row .zl { opacity: 0.9; }
+.wc-row .delta { margin-left: 8px; color: var(--primary); }
+.wc-row .big { margin-left: auto; font-size: 24px; font-weight: 500; }
+
+.grid { display: grid; }
+.tile { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+.tile img, .tile .noicon { border-radius: 20%; box-shadow: 0 3px 6px rgba(0,0,0,0.28); }
+.tile .lbl { margin-top: 7px; white-space: nowrap; text-shadow: 0 1px 0 rgba(0,0,0,0.45); line-height: var(--line); }
+.tile .opendot { margin-top: 5px; width: 14px; height: 3px; border-radius: 2px; background: var(--primary); }
+.tile .warn { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--orange); border: 2px solid var(--surface); }
+.tile.dim img { opacity: 0.38; }
+.disabled { color: var(--ink-variant); }
+
+.dock-wrap { flex: none; height: 62px; margin-top: 4px; display: flex; align-items: center; justify-content: center; }
+.dock {
+  display: flex; gap: 14px; padding: 8.4px 14px; border-radius: 999px;
+  background: rgba(221, 226, 241, 0.07); border: 1px solid rgba(221, 226, 241, 0.12);
+}
+.dock .btn { width: 38px; height: 38px; border-radius: 50%; background: rgba(221, 226, 241, 0.09); display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--ink); }
+.dock .btn.active { background: rgba(255, 179, 173, 0.85); color: var(--surface); }
+
+/* ---------------------------------------------------------------- KosLib widgets */
+.section { display: flex; align-items: center; height: var(--line); margin: 4px 0 6px; font-family: Consolas, ui-monospace, monospace; font-size: 12.5px; }
+.section .dia { width: 8px; height: 8px; margin: 0 9px 0 3px; border: 1px solid var(--tertiary); transform: rotate(45deg); position: relative; }
+.section .dia::after { content: ""; position: absolute; inset: 1.5px; background: var(--tertiary); }
+.section .num { color: var(--tertiary); }
+.section .slash { color: var(--ink-variant); }
+.section .ttl { color: var(--primary); letter-spacing: 0.04em; }
+.section .rule { flex: 1; height: 1px; margin-left: 8px; background: linear-gradient(90deg, var(--primary), rgba(232, 192, 141, 0)); }
+
+.card {
+  position: relative; padding: 9px 12px; margin-bottom: 4px; border-radius: 8px;
+  background: var(--surface-low); border: 1px solid var(--outline-variant);
+}
+.card::before { content: ""; position: absolute; top: -1px; left: 8px; right: 8px; height: 2px; background: linear-gradient(90deg, transparent, var(--primary) 12%, var(--tertiary) 88%, transparent); }
+.card.warn { border-color: rgba(255, 181, 0, 0.45); }
+.card.warn::before { background: linear-gradient(90deg, transparent, var(--orange) 12%, var(--orange) 88%, transparent); }
+.card .row1 { display: flex; gap: 8px; }
+.card .ico { width: 40px; height: 40px; flex: none; }
+.card .ico.dim { opacity: 0.38; }
+.card .txt { flex: 1; line-height: var(--line); }
+.card .switch { flex: none; margin-left: 12px; }
+.callout { position: relative; margin: 4px 0; padding-left: 11px; color: var(--orange); line-height: var(--line); }
+.callout::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 2px; background: var(--orange); }
+
+.btns { display: flex; gap: 8px; margin-top: 4px; }
+.button {
+  display: inline-flex; align-items: center; gap: 6px; height: var(--frame); padding: 0 8px;
+  background: var(--sec-container); border-radius: 6px; color: var(--ink); white-space: nowrap;
+}
+.button .g { font-size: 12px; }
+
+.switch { display: inline-flex; align-items: center; gap: 4px; height: var(--frame); }
+.switch .track { position: relative; width: 37px; height: var(--frame); border-radius: 12px; background: var(--surface-highest); border: 2px solid var(--ink-variant); }
+.switch .thumb { position: absolute; top: 50%; left: 9.5px; width: 11.5px; height: 11.5px; margin: -5.75px 0 0 -5.75px; border-radius: 50%; background: var(--ink-variant); }
+.switch.on .track { background: var(--primary); border-color: var(--primary); }
+.switch.on .thumb { left: 24.5px; width: 17px; height: 17px; margin: -8.5px 0 0 -8.5px; background: #000; }
+
+.check { display: flex; align-items: center; gap: 4px; height: var(--frame); margin-bottom: 4px; }
+.check .box { position: relative; width: var(--frame); height: var(--frame); border-radius: 6px; background: var(--surface-highest); flex: none; }
+.check.on .box::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid var(--primary); border-width: 0 3px 3px 0; transform: rotate(45deg); }
+.check img { width: var(--frame); height: var(--frame); }
+
+.slider { position: relative; width: 240px; height: var(--frame); border-radius: 6px; background: var(--surface-highest); text-align: center; line-height: var(--frame); }
+.slider .grab { position: absolute; top: 2px; bottom: 2px; width: 12px; border-radius: 6px; background: var(--primary); }
+.help { display: inline-block; margin-left: 8px; color: var(--ink-variant); }
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+
+/* ---------------------------------------------------------------- app page */
+.apphead { position: relative; height: 22px; margin-bottom: 6px; display: flex; align-items: center; }
+.apphead img { width: 22px; height: 22px; margin: 0 6px 0 8px; }
+.tabs { display: flex; gap: 8px; height: var(--line); line-height: var(--line); margin-bottom: 4px; }
+.tabs .tab.sel { background: rgba(101, 60, 57, 1); }
+.sep { height: 1px; background: var(--outline-variant); margin: 0 0 6px; }
+.collapsing { display: flex; align-items: center; gap: 8px; height: var(--frame); padding: 0 6px; margin-bottom: 4px; border-radius: 6px; background: rgba(101, 60, 57, 0.55); }
+.input { display: inline-flex; gap: 4px; width: 140px; }
+.input .val { flex: 1; height: var(--frame); line-height: var(--frame); padding: 0 6px; border-radius: 6px; background: var(--surface-highest); }
+.input .pm { width: var(--frame); height: var(--frame); line-height: var(--frame); text-align: center; border-radius: 6px; background: var(--sec-container); }
+.wrap { line-height: var(--line); margin-bottom: 4px; }
+.grey { color: #a6a6b3; } /* Aetherpath's own TextColored(0.65, 0.65, 0.70) */
+
+.calc-sub { height: var(--line); line-height: var(--line); }
+.calc-display { text-align: right; font-size: 21.6px; line-height: 27px; margin-bottom: 4px; }
+.keys { display: grid; grid-template-columns: repeat(4, 60px); gap: 4px 8px; margin: 4px 0; }
+.key { width: 60px; height: 60px; border-radius: 6px; background: var(--sec-container); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.child { border: 1px solid var(--outline-variant); border-radius: 12px; padding: 8px; height: 130px; margin-bottom: 4px; }
+.hist { line-height: var(--line); padding: 2px 0; }
+.hist + .hist { border-top: 1px solid var(--outline-variant); }
+
+/* ---------------------------------------------------------------- quick launcher (folded tablet) */
+.launcher { position: absolute; padding: 8px; display: flex; align-items: center; gap: 8px; background: rgba(14, 19, 30, 0.85); backdrop-filter: blur(6px); border: 1px solid var(--outline-variant); border-radius: 18px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+.launcher img { width: 34px; height: 34px; }
+.launcher .round { position: static; width: 20px; height: 20px; font-size: 11px; }
