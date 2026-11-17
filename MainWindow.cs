@@ -113,6 +113,7 @@ public sealed class MainWindow : Window
                 if (page == Page.Home)
                 {
                     DrawClockCard();
+                    DrawWidgets();
                     DrawGrid(dt, animate);
                 }
                 else
@@ -237,9 +238,7 @@ public sealed class MainWindow : Window
         var lift = (1 - e) * 10 * S;
         min.Y += lift;
         max.Y += lift;
-        draw.AddRectFilled(min, max, ImGui.GetColorU32(ink with { W = 0.06f * e }), rounding);
-        draw.AddRectFilled(min, new Vector2(max.X, min.Y + height * 0.45f), ImGui.GetColorU32(ink with { W = 0.03f * e }), rounding, ImDrawFlags.RoundCornersTop);
-        draw.AddRect(min, max, ImGui.GetColorU32(ink with { W = 0.10f * e }), rounding, ImDrawFlags.None, S);
+        GlassFrame(draw, min, max, e);
 
         var now = DateTime.Now;
         var pad = 16 * S;
@@ -286,6 +285,64 @@ public sealed class MainWindow : Window
         ImGui.Dummy(new Vector2(width, height + 2 * S + 12 * S));
     }
 
+    /// <summary>The glass card look: a faint fill, a lighter top band for sheen, a hairline edge.</summary>
+    private static void GlassFrame(ImDrawListPtr draw, Vector2 min, Vector2 max, float alpha)
+    {
+        var ink = ImGui.GetStyle().Colors[(int)ImGuiCol.Text];
+        var rounding = 16 * S;
+        draw.AddRectFilled(min, max, ImGui.GetColorU32(ink with { W = 0.06f * alpha }), rounding);
+        draw.AddRectFilled(min, new Vector2(max.X, min.Y + MathF.Min(48 * S, (max.Y - min.Y) * 0.45f)),
+                           ImGui.GetColorU32(ink with { W = 0.03f * alpha }), rounding, ImDrawFlags.RoundCornersTop);
+        draw.AddRect(min, max, ImGui.GetColorU32(ink with { W = 0.10f * alpha }), rounding, ImDrawFlags.None, S);
+    }
+
+    // ------------------------------------------------------------------ widgets
+
+    /// <summary>Widget apps (WorldClock14) on the home screen, each in a glass card sliding in after the clock card. The
+    /// frame goes on a background channel once the body has been laid out, as KosLib's Kos.Card does.</summary>
+    private void DrawWidgets()
+    {
+        for (var i = 0; i < plugin.Apps.Count; i++)
+        {
+            var app = plugin.Apps[i];
+            if (!app.Info.Widget || plugin.Config.DisabledApps.Contains(app.Info.Id)) continue;
+            if (app.Instance is not IKosWidget widget)
+            {
+                if (app.Status is { } status) Kos.Callout($"{app.Info.Name}: {status}", ImGuiColors.DalamudOrange);
+                continue;
+            }
+
+            var e = Animate ? Motion.EaseOutCubic(Motion.Stagger(sinceOpen, 1, 0.06f, 0.4f)) : 1;
+            var pad = new Vector2(14, 10) * S;
+            var draw = ImGui.GetWindowDrawList();
+            var width = ImGui.GetContentRegionAvail().X;
+            var start = ImGui.GetCursorScreenPos() + new Vector2(0, (1 - e) * 12 * S);
+            draw.ChannelsSplit(2);
+            draw.ChannelsSetCurrent(1);
+            ImGui.SetCursorScreenPos(start + pad);
+            using (ImRaii.PushId(app.Info.Id))
+            using (ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * e))
+            using (ImRaii.Group())
+            {
+                ImGui.PushItemWidth(width - 2 * pad.X);
+                using (ImRaii.TextWrapPos(start.X - ImGui.GetWindowPos().X + width - pad.X))
+                {
+                    ImGui.Dummy(new Vector2(width - 2 * pad.X, 0)); // the group is the card's full inner width
+                    widget.DrawWidget();
+                }
+
+                ImGui.PopItemWidth();
+            }
+
+            var end = ImGui.GetItemRectMax();
+            draw.ChannelsSetCurrent(0);
+            GlassFrame(draw, start, new Vector2(start.X + width, end.Y + pad.Y), e);
+            draw.ChannelsMerge();
+            ImGui.SetCursorScreenPos(new Vector2(start.X, end.Y + pad.Y));
+            ImGui.Dummy(new Vector2(width, 12 * S));
+        }
+    }
+
     // ------------------------------------------------------------------ app grid
 
     private void DrawGrid(float dt, bool animate)
@@ -298,10 +355,13 @@ public sealed class MainWindow : Window
         var origin = ImGui.GetCursorScreenPos();
 
         AppSlot? launch = null, toggle = null;
+        var slot = 0;
         for (var i = 0; i < plugin.Apps.Count; i++)
         {
             var app = plugin.Apps[i];
-            var min = origin + new Vector2(i % cols * cell.X, i / cols * cell.Y);
+            if (app.Info.Widget) continue; // drawn by DrawWidgets
+            var min = origin + new Vector2(slot % cols * cell.X, slot / cols * cell.Y);
+            slot++;
             ImGui.SetCursorScreenPos(min);
             var clicked = ImGui.InvisibleButton($"##{app.Info.Id}", cell);
             var hovered = ImGui.IsItemHovered();
@@ -338,11 +398,11 @@ public sealed class MainWindow : Window
             if (ripple[i] >= 0) ripple[i] = animate && ripple[i] + dt < 0.55f ? ripple[i] + dt : -1;
 
             // Entrance: each icon pops in a beat after the one before it.
-            var t = animate ? Motion.Stagger(sinceOpen, i + 1, 0.035f, 0.42f) : 1;
+            var t = animate ? Motion.Stagger(sinceOpen, slot + 1, 0.035f, 0.42f) : 1;
             DrawTile(app, i, min, cell, icon, Motion.EaseOutBack(t), Motion.EaseOutCubic(t), on, hovered);
         }
 
-        var rows = (plugin.Apps.Count + cols - 1) / cols;
+        var rows = (slot + cols - 1) / cols;
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(new Vector2(width, rows * cell.Y)); // claim the grid so the page can scroll when short
 

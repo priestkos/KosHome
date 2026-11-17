@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 
@@ -202,6 +205,58 @@ public sealed class WorldClockWindow : Window, IDisposable
         var flat = flashText.Replace('\n', ' ');
         flash = "Copied: " + (flat.Length > 68 ? flat[..65] + "..." : flat);
         flashUntil = ImGui.GetTime() + FlashSeconds;
+    }
+
+    /// <summary>
+    /// KosHome's home-screen widget: every zone live, a row click copies that zone's line, and the header has copy all,
+    /// the full converter (custom times) and settings. Same rows, formatting and copy path as the window.
+    /// </summary>
+    public void DrawWidget(Action openConverter)
+    {
+        var rows = Converter.Convert(DateTimeOffset.UtcNow, ZoneResolver.ResolveBaseOrLocal(config.BaseZone), config.Zones);
+        var s = ImGuiHelpers.GlobalScale;
+
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextDisabled("WORLD CLOCK");
+        var button = ImGui.GetFrameHeight();
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        ImGui.SameLine(ImGui.GetContentRegionMax().X - 3 * button - 2 * spacing);
+        var copyable = rows.Exists(r => r.Ok);
+        using (ImRaii.Disabled(!copyable))
+            if (ImGuiComponents.IconButton("##wcAll", FontAwesomeIcon.Copy) && copyable)
+                RequestCopy(ChatFormatter.Build(rows, config.Format), "every zone");
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) ImGui.SetTooltip("Copy every zone for chat");
+        ImGui.SameLine();
+        if (ImGuiComponents.IconButton("##wcConvert", FontAwesomeIcon.ExchangeAlt)) openConverter();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Convert another time (/tz)");
+        ImGui.SameLine();
+        if (ImGuiComponents.IconButton("##wcSettings", FontAwesomeIcon.Cog)) openSettings();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Zones and format (/tzconfig)");
+
+        if (rows.Count == 0) ImGui.TextDisabled("No zones switched on: add some in settings.");
+        var width = ImGui.GetContentRegionAvail().X;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var start = ImGui.GetCursorPos();
+            if (ImGui.Selectable($"##wcRow{i}", false, ImGuiSelectableFlags.None, new Vector2(width, 0)) && row.Ok)
+                RequestCopy(ChatFormatter.RowText(row, config.Format), row.Label);
+            if (row.Ok && ImGui.IsItemHovered()) ImGui.SetTooltip($"{row.DayAbbr} {row.DateText}  -  click to copy for chat");
+            ImGui.SetCursorPos(start);
+            ImGui.TextUnformatted(row.Label);
+            var time = row.Ok ? row.Time(config.Format) : row.Error;
+            var delta = row.Ok ? row.DeltaText : string.Empty;
+            var right = ImGui.CalcTextSize(time).X + (delta.Length > 0 ? ImGui.CalcTextSize(delta).X + spacing : 0);
+            ImGui.SameLine(MathF.Max(start.X + 90 * s, start.X + width - right));
+            if (row.Ok) ImGui.TextUnformatted(time); else ImGui.TextDisabled(time);
+            if (delta.Length > 0)
+            {
+                ImGui.SameLine();
+                ImGui.TextDisabled(delta);
+            }
+        }
+
+        if (flash.Length > 0 && ImGui.GetTime() < flashUntil) ImGui.TextDisabled(flash);
     }
 
     public void Dispose() { }

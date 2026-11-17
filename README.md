@@ -19,11 +19,12 @@ and off from one window, laid out like a tablet: a home screen of app icons on f
 | Quill14 | `/quill` | Roleplay posts: smart splitting, markup, templates and paced sending. |
 | VenueLedger | `/venue` | Every venue you know, on one clock. |
 | Wardrobe14 | `/pmm` | A cross-collection view of your Penumbra mods. |
-| WorldClock14 | `/tz`, `/tzconfig` | One time, every timezone, one click to chat. |
+| WorldClock14 | `/tz`, `/tzconfig` | A widget on the home screen: your timezones live, one click to chat. |
 
 All apps start switched on. `/koshome` opens the tablet:
 
-- **Home:** a clock card (local time, Eorzea time, how many apps are running) and the app icons. Click an icon to open
+- **Home:** a clock card (local time, Eorzea time, how many apps are running), the WorldClock14 widget (every zone
+  live; click a zone to copy it for chat, or use its buttons to copy all, convert another time and set zones) and the app icons. Click an icon to open
   the app and again to close it; an app that is off is switched on first. A small light under an icon means its window
   is open; an orange dot means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and
   Switch off.

@@ -20,7 +20,7 @@ internal static class AppCatalog
             pi => pi.Create<Apps.VenueLedger.Plugin>()),
         new("Wardrobe14", "Wardrobe14", "A cross-collection view of your Penumbra mods; bulk toggles and Glamourer looks to follow.", "/pmm", false,
             pi => pi.Create<Apps.Wardrobe14.Plugin>()),
-        new("WorldClock14", "WorldClock14", "One time, every timezone, one click to chat.", "/tz, /tzconfig", true,
-            pi => pi.Create<Apps.WorldClock14.Plugin>()),
+        new("WorldClock14", "WorldClock14", "A home-screen widget: your timezones live, click one to copy it for chat. /tz converts any time.", "/tz, /tzconfig", true,
+            pi => pi.Create<Apps.WorldClock14.Plugin>(), Widget: true),
     ];
 }

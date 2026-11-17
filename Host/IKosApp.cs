@@ -14,3 +14,10 @@ public interface IKosApp : IDisposable
 
     void OpenSettings();
 }
+
+/// <summary>An app that lives on the home screen as a widget instead of an icon (see <see cref="AppInfo.Widget"/>).
+/// Drawn inside KosHome's window, in a glass card the host provides.</summary>
+public interface IKosWidget
+{
+    void DrawWidget();
+}

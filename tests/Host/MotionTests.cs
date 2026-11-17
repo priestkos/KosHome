@@ -105,6 +105,16 @@ public class MotionTests
         Assert.Equal((hour, minute), Motion.EorzeaTime(DateTimeOffset.FromUnixTimeSeconds(unixSeconds)));
 }
 
+public class CatalogTests
+{
+    [Fact]
+    public void WorldClockIsTheOnlyWidgetAndCanDrawAsOne()
+    {
+        Assert.Equal(["WorldClock14"], AppCatalog.All.Where(a => a.Widget).Select(a => a.Id));
+        Assert.True(typeof(IKosWidget).IsAssignableFrom(typeof(Apps.WorldClock14.Plugin)));
+    }
+}
+
 public class ConfigurationTests
 {
     [Fact]

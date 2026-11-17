@@ -8,7 +8,7 @@ using Dalamud.Plugin.Services;
 
 namespace KosHome.Apps.WorldClock14;
 
-public sealed class Plugin : IKosApp
+public sealed class Plugin : IKosApp, IKosWidget
 {
     public string Name => "WorldClock14";
 
@@ -73,6 +73,8 @@ public sealed class Plugin : IKosApp
     public bool MainOpen => mainWindow.IsOpen;
 
     public void OpenSettings() => ToggleConfig();
+
+    public void DrawWidget() => mainWindow.DrawWidget(ToggleMain);
 
     private void OnDraw()
     {
