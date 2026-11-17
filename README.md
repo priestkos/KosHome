@@ -25,12 +25,16 @@ All apps start switched on. `/koshome` opens the tablet:
 
 - **Home:** a clock card (local time, Eorzea time, how many apps are running), the WorldClock14 widget (every zone
   live; click a zone to copy it for chat, or use its buttons to copy all, convert another time and set zones) and the app icons. Click an icon to open
-  the app and again to close it; an app that is off is switched on first. A small light under an icon means its window
-  is open; an orange dot means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and
-  Switch off.
+  the app; an app that is off is switched on first. A small light under an icon means the app is open; an orange dot
+  means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and Switch off.
+- **Every app opens inside the tablet**, from an icon, its command or its settings: a header with Home, the app, tabs
+  for its main and settings windows, and close. Home leaves it open (click its icon to come back). Closing or folding
+  the tablet closes the apps' windows.
+- **Quick launcher:** the arrows at the top left fold the tablet into a small bar of shortcuts; pick which apps it
+  shows in KosHome Settings. A shortcut opens its app and unfolds the tablet.
 - **Dock:** Home, Apps (every app with its switch, Open/Close and Settings buttons) and KosHome Settings.
-- **KosHome Settings** (also the cog in `/xlplugins`): window opacity, frosted glass, the glow wallpaper and animations.
-  Animations also stay off while Dalamud's Reduce motion is on.
+- **KosHome Settings** (a page of the tablet; also the cog in `/xlplugins`): window opacity, frosted glass, the glow
+  wallpaper, animations and the quick launcher's shortcuts. Animations also stay off while Dalamud's Reduce motion is on.
 
 Switching an app off removes its commands and windows until you switch it back on.
 

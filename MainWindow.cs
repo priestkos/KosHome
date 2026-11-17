@@ -12,14 +12,25 @@ namespace KosHome;
 
 /// <summary>
 /// The tablet: a status bar with the island, a clock card and a grid of app icons on the home page, the Apps page with a
-/// switch per app, and a dock. Everything moves through <see cref="Motion"/> and <see cref="Spring"/>, so with
+/// switch per app, KosHome Settings, the app page that draws an app's window inside the tablet, and a dock. Folded down,
+/// it is the quick launcher: a bar of shortcuts. Everything moves through <see cref="Motion"/> and <see cref="Spring"/>, so with
 /// animations off (or Dalamud's Reduce motion on) every value simply snaps to where it is going.
 /// </summary>
 public sealed class MainWindow : Window
 {
-    private enum Page { Home, Apps }
+    private enum Page { Home, Apps, Settings, App }
+
+    private const ImGuiWindowFlags BaseFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse;
+    private static readonly WindowSizeConstraints TabletSize = new() { MinimumSize = new Vector2(300, 420), MaximumSize = new Vector2(1400, 1600) };
 
     private readonly KosHomePlugin plugin;
+    private readonly SettingsPage settings;
+    private readonly OpenTracker<IWindow> tracker = new();
+    private readonly List<IWindow> opened = [], closed = [];
+    private readonly HashSet<IWindow> failed = [];
+    private (AppSlot App, IWindow Window)? shown;
+    private Vector2 expandedSize = new(440, 600);
+    private bool resize;
     private readonly Spring[] tileScale;
     private readonly float[] ripple;   // seconds since the tile was tapped; negative = no ripple
     private readonly float[] openDot;  // 0..1 the "window open" dot under each icon
@@ -37,16 +48,17 @@ public sealed class MainWindow : Window
     private Spring island = new(0);
 
     internal MainWindow(KosHomePlugin plugin)
-        : base("KosHome###KosHomeTablet", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+        : base("KosHome###KosHomeTablet", BaseFlags)
     {
         this.plugin = plugin;
+        settings = new SettingsPage(plugin);
         var n = plugin.Apps.Count;
         tileScale = Enumerable.Repeat(new Spring(1), n).ToArray();
         ripple = Enumerable.Repeat(-1f, n).ToArray();
         openDot = new float[n];
-        Size = new Vector2(440, 600);
+        Size = expandedSize;
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(300, 420), MaximumSize = new Vector2(1400, 1600) };
+        SizeConstraints = TabletSize;
     }
 
     private bool Animate => plugin.Config.Animations && !KosHomePlugin.PluginInterface.UiBuilder.ShouldUseReducedMotion;
@@ -60,6 +72,79 @@ public sealed class MainWindow : Window
         island.Snap(0);
     }
 
+    /// <summary>An app window is open exactly while the tablet can show it, so a command never toggles a window that is
+    /// hidden behind a shut tablet (and each app's OnClose, which some use to save, still runs).</summary>
+    public override void OnClose() => CloseAppWindows();
+
+    private void CloseAppWindows()
+    {
+        foreach (var app in plugin.Apps)
+            if (app.Instance is { } instance)
+                foreach (var w in instance.Windows) w.IsOpen = false;
+    }
+
+    // ------------------------------------------------------------------ app windows
+
+    /// <summary>Every frame, tablet open or not: raises OnOpen/OnClose as Dalamud's WindowHost would, brings a window that
+    /// just opened (by command, DTR click or a tap) into the tablet, and steps back when the shown one closes.</summary>
+    internal void TrackAppWindows()
+    {
+        opened.Clear();
+        closed.Clear();
+        tracker.Step(plugin.Apps.SelectMany(a => a.Instance?.Windows ?? []).Select(w => (w, w.IsOpen)), opened, closed);
+        foreach (var w in closed) Guard(w, w.OnClose, "OnClose");
+        foreach (var w in opened) Guard(w, w.OnOpen, "OnOpen");
+
+        if (shown is (var app, var win) && !(win.IsOpen && app.Instance?.Windows.Contains(win) == true))
+        {
+            // The app's other open window (its settings closing back to its main window), else home.
+            var next = app.Instance?.Windows.FirstOrDefault(w => w.IsOpen);
+            shown = next is null ? null : (app, next);
+            if (next is null && page == Page.App) SetPage(Page.Home);
+        }
+
+        foreach (var w in opened)
+            if (w.IsOpen && plugin.Apps.FirstOrDefault(a => a.Instance?.Windows.Contains(w) == true) is { } owner)
+                Show(owner, w);
+    }
+
+    private void Show(AppSlot app, IWindow window)
+    {
+        shown = (app, window);
+        IsOpen = true;
+        SetCompact(false);
+        SetPage(Page.App);
+    }
+
+    private static void Guard(IWindow w, Action call, string what)
+    {
+        try { call(); }
+        catch (Exception ex) { KosHomePlugin.Log.Error(ex, "{Window} threw in {What}", w.WindowName, what); }
+    }
+
+    /// <summary>The /xlplugins cog: open the tablet on its Settings page, or shut it if that is what it shows.</summary>
+    internal void ToggleSettings()
+    {
+        if (IsOpen && !plugin.Config.Compact && page == Page.Settings)
+        {
+            IsOpen = false;
+            return;
+        }
+
+        IsOpen = true;
+        SetCompact(false);
+        SetPage(Page.Settings);
+    }
+
+    private void SetCompact(bool compact)
+    {
+        if (plugin.Config.Compact == compact) return;
+        if (compact) CloseAppWindows(); // the launcher has no room for them
+        plugin.Config.Compact = compact;
+        KosHomePlugin.PluginInterface.SavePluginConfig(plugin.Config);
+        resize = true;
+    }
+
     /// <summary>KosLib's MaterialKos in KosMos colours, the user's opacity on the background, a rounder phone-like
     /// corner, and the open fade. Frosted, KosTheme.Frost() blurs behind the window, so Dalamud's blur is switched off.</summary>
     public override void PreDraw()
@@ -67,6 +152,12 @@ public sealed class MainWindow : Window
         windowStyle?.Dispose();
         windowTheme?.Dispose();
         var cfg = plugin.Config;
+        // Folded, the window fits its shortcuts; unfolded, it goes back to the size it had.
+        Flags = BaseFlags | (cfg.Compact ? ImGuiWindowFlags.AlwaysAutoResize : 0);
+        SizeConstraints = cfg.Compact ? null : TabletSize;
+        Size = expandedSize;
+        SizeCondition = resize && !cfg.Compact ? ImGuiCond.Always : ImGuiCond.FirstUseEver;
+        resize = false;
         AllowBackgroundBlur = !cfg.Frosted;
         windowTheme = KosTheme.PushWindow(KosAccent.KosMos, material: true, frosted: cfg.Frosted);
         ImGui.SetNextWindowBgAlpha(cfg.Opacity);
@@ -96,6 +187,13 @@ public sealed class MainWindow : Window
         fade = animate ? MathF.Min(1, fade + dt / 0.22f) : 1;
         pageProgress = animate ? MathF.Min(1, pageProgress + dt / 0.28f) : 1;
 
+        if (plugin.Config.Compact)
+        {
+            DrawLauncher();
+            return;
+        }
+
+        expandedSize = ImGui.GetWindowSize() / S;
         if (plugin.Config.Wallpaper) DrawWallpaper();
         DrawStatusBar(dt, animate);
 
@@ -106,19 +204,21 @@ public sealed class MainWindow : Window
         var start = ImGui.GetCursorPos();
         ImGui.SetCursorPos(start + new Vector2((1 - e) * 36 * S * pageDirection, 0));
         using (ImRaii.PushStyle(ImGuiStyleVar.Alpha, ImGui.GetStyle().Alpha * (0.15f + 0.85f * e)))
-        using (var child = ImRaii.Child("##page", size, false, ImGuiWindowFlags.NoBackground | (page == Page.Home ? ImGuiWindowFlags.NoScrollbar : 0)))
+        using (var child = ImRaii.Child("##page", size, false, ImGuiWindowFlags.NoBackground
+                   | (page is Page.Home or Page.App ? ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse : 0)))
         {
             if (child)
             {
-                if (page == Page.Home)
+                switch (page)
                 {
-                    DrawClockCard();
-                    DrawWidgets();
-                    DrawGrid(dt, animate);
-                }
-                else
-                {
-                    DrawAppsPage();
+                    case Page.Home:
+                        DrawClockCard();
+                        DrawWidgets();
+                        DrawGrid(dt, animate);
+                        break;
+                    case Page.Apps: DrawAppsPage(); break;
+                    case Page.Settings: settings.Draw(); break;
+                    case Page.App: DrawAppPage(); break;
                 }
             }
         }
@@ -161,10 +261,10 @@ public sealed class MainWindow : Window
         var min = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
         var mid = min.Y + height / 2;
-        var text = ImGui.GetColorU32(ImGuiCol.Text);
 
-        var now = DateTime.Now.ToString("HH:mm");
-        draw.AddText(new Vector2(min.X + 6 * S, mid - ImGui.GetTextLineHeight() / 2), text, now);
+        var r = 9 * S;
+        if (RoundButton("##collapse", FontAwesomeIcon.CompressAlt, new Vector2(min.X + r + 4 * S, mid), r, "Fold into the quick launcher"))
+            SetCompact(true);
 
         // The island: a dark pill that grows to say what just happened, then shrinks back.
         toastLeft -= dt;
@@ -200,14 +300,8 @@ public sealed class MainWindow : Window
         }
 
         // Close: the window has no title bar.
-        var r = 9 * S;
-        var centre = new Vector2(min.X + width - r - 4 * S, mid);
-        ImGui.SetCursorScreenPos(centre - new Vector2(r));
-        if (ImGui.InvisibleButton("##close", new Vector2(2 * r))) IsOpen = false;
-        var hot = ImGui.IsItemHovered();
-        if (hot) ImGui.SetTooltip("Close KosHome (Esc, or /koshome)");
-        draw.AddCircleFilled(centre, r, ImGui.GetColorU32(hot ? ImGuiColors.DalamudRed with { W = 0.85f } : ImGui.GetStyle().Colors[(int)ImGuiCol.Text] with { W = 0.10f }), 20);
-        Glyph(draw, FontAwesomeIcon.Times, centre, 10 * S, hot ? 0xFFFFFFFF : text);
+        if (RoundButton("##close", FontAwesomeIcon.Times, new Vector2(min.X + width - r - 4 * S, mid), r, "Close KosHome (Esc, or /koshome)", danger: true))
+            IsOpen = false;
 
         ImGui.SetCursorScreenPos(new Vector2(min.X, min.Y + height + 6 * S));
     }
@@ -372,13 +466,17 @@ public sealed class MainWindow : Window
             if (hovered)
                 ImGui.SetTooltip(app.Info.Name + "\n" + app.Info.Summary + "\n" + app.Info.Commands + "\n\n"
                                  + (app.Status ?? (!on ? "Off: click to switch it on and open it."
-                                     : mainOpen ? "Open: click to close it. Right-click for more."
+                                     : mainOpen ? "Open: click to show it. Right-click to close it."
                                      : "Click to open. Right-click for more.")));
             using (var menu = ImRaii.ContextPopupItem($"##menu{app.Info.Id}"))
             {
                 if (menu)
                 {
-                    if (ImGui.MenuItem(mainOpen ? "Close" : "Open")) launch = app;
+                    if (ImGui.MenuItem(mainOpen ? "Close" : "Open"))
+                    {
+                        if (mainOpen) app.Instance?.ToggleMain();
+                        else launch = app;
+                    }
                     if (app.Info.HasSettings && ImGui.MenuItem("Settings", "", false, app.Instance is not null)) app.Instance?.OpenSettings();
                     ImGui.Separator();
                     if (ImGui.MenuItem(on ? "Switch off" : "Switch on")) toggle = app;
@@ -417,8 +515,8 @@ public sealed class MainWindow : Window
         if (launch is not null) Launch(launch);
     }
 
-    /// <summary>Tap = open, tap again = close. An app that is off is switched on first; one that failed or was blocked
-    /// is retried.</summary>
+    /// <summary>Tap = open it inside the tablet, or show it again when it is already open. An app that is off is switched
+    /// on first; one that failed or was blocked is retried.</summary>
     private void Launch(AppSlot app)
     {
         var wasOff = plugin.Config.DisabledApps.Contains(app.Info.Id);
@@ -431,8 +529,14 @@ public sealed class MainWindow : Window
             return;
         }
 
-        instance.ToggleMain();
-        Toast(app, wasOff ? "switched on" : instance.MainOpen ? "opened" : "closed");
+        if (instance.MainOpen && instance.Windows.FirstOrDefault(w => w.IsOpen) is { } window)
+        {
+            Show(app, window);
+            return;
+        }
+
+        instance.ToggleMain(); // TrackAppWindows shows it next frame
+        Toast(app, wasOff ? "switched on" : "opened");
     }
 
     private void DrawTile(AppSlot app, int i, Vector2 min, Vector2 cell, float icon, float pop, float alpha, bool on, bool hovered)
@@ -510,7 +614,7 @@ public sealed class MainWindow : Window
         {
             (FontAwesomeIcon.Home, "Home", page == Page.Home),
             (FontAwesomeIcon.Th, "Apps: switch apps on and off", page == Page.Apps),
-            (FontAwesomeIcon.Cog, "KosHome Settings: opacity, glass, animation", plugin.SettingsOpen),
+            (FontAwesomeIcon.Cog, "KosHome Settings: look, motion, quick launcher", page == Page.Settings),
         };
         var dockW = items.Length * 2 * r + (items.Length + 1) * gap;
         var min = ImGui.GetCursorScreenPos() + new Vector2((avail - dockW) / 2, (height - (2 * r + 2 * gap * 0.6f)) / 2);
@@ -538,7 +642,7 @@ public sealed class MainWindow : Window
             if (!clicked) continue;
             if (k == 0) SetPage(Page.Home);
             else if (k == 1) SetPage(Page.Apps);
-            else plugin.ToggleSettings();
+            else SetPage(Page.Settings);
         }
 
         ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, max.Y));
@@ -612,9 +716,139 @@ public sealed class MainWindow : Window
         }
     }
 
+    // ------------------------------------------------------------------ app page
+
+    /// <summary>An app's window drawn in the tablet: a header (home, the app, its windows when it has more than one,
+    /// close) over the window's own Draw. PreDraw/PostDraw are not called: they exist to set up an ImGui.Begin
+    /// (SetNextWindow*, which here would land on the child), and no app overrides them.</summary>
+    private void DrawAppPage()
+    {
+        if (shown is not (var app, var win) || app.Instance is not { } instance)
+        {
+            SetPage(Page.Home);
+            return;
+        }
+
+        var r = 11 * S;
+        var origin = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+        var mid = origin.Y + r;
+        if (RoundButton("##home", FontAwesomeIcon.ChevronLeft, new Vector2(origin.X + r, mid), r, "Home (the app stays open)"))
+            SetPage(Page.Home);
+        var x = origin.X + 2 * r + 8 * S;
+        if (Icon(app) is { } tex)
+        {
+            ImGui.GetWindowDrawList().AddImage(tex.Handle, new Vector2(x, mid - r), new Vector2(x + 2 * r, mid + r));
+            x += 2 * r + 6 * S;
+        }
+
+        ImGui.GetWindowDrawList().AddText(new Vector2(x, mid - ImGui.GetTextLineHeight() / 2), ImGui.GetColorU32(ImGuiCol.Text), app.Info.Name);
+        if (RoundButton("##closeApp", FontAwesomeIcon.Times, new Vector2(origin.X + width - r, mid), r, $"Close {app.Info.Name}", danger: true))
+            win.IsOpen = false;
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, origin.Y + 2 * r + 6 * S));
+
+        // Main window and settings window side by side as tabs.
+        if (instance.Windows.Count > 1)
+        {
+            for (var k = 0; k < instance.Windows.Count; k++)
+            {
+                var w = instance.Windows[k];
+                var title = w.WindowName.Split("##")[0];
+                if (k > 0) ImGui.SameLine();
+                if (ImGui.Selectable($"{title}##tab{k}", w == win, ImGuiSelectableFlags.None, new Vector2(ImGui.CalcTextSize(title).X, 0)) && w != win)
+                {
+                    w.IsOpen = true;
+                    Show(app, w);
+                }
+            }
+
+            ImGui.Separator();
+        }
+
+        using var body = ImRaii.Child("##appBody", Vector2.Zero, false, ImGuiWindowFlags.NoBackground);
+        if (!body) return;
+        using var id = ImRaii.PushId(win.WindowName);
+        if (failed.Contains(win))
+        {
+            Kos.Callout("This window hit an error and stopped drawing; /xllog has the details.", ImGuiColors.DalamudOrange);
+            if (Kos.IconButton(FontAwesomeIcon.Redo, "Try again")) failed.Remove(win);
+            return;
+        }
+
+        try
+        {
+            win.Update();
+            if (win.DrawConditions()) win.Draw();
+        }
+        catch (Exception ex)
+        {
+            // As Dalamud's WindowHost does: log once and stop drawing this window rather than throw every frame.
+            KosHomePlugin.Log.Error(ex, "Error during Draw(): {Window}", win.WindowName);
+            failed.Add(win);
+        }
+    }
+
+    // ------------------------------------------------------------------ quick launcher
+
+    /// <summary>The folded tablet: unfold, the chosen shortcuts (Settings, Quick launcher), close. A shortcut opens its
+    /// app, which unfolds the tablet to show it.</summary>
+    private void DrawLauncher()
+    {
+        var draw = ImGui.GetWindowDrawList();
+        var icon = 34 * S;
+        var gap = 8 * S;
+        var r = 10 * S;
+        var origin = ImGui.GetCursorScreenPos();
+        var mid = origin.Y + icon / 2;
+        var x = origin.X;
+        if (RoundButton("##unfold", FontAwesomeIcon.ExpandAlt, new Vector2(x + r, mid), r, "Unfold KosHome (pick shortcuts in its Settings)"))
+            SetCompact(false);
+        x += 2 * r + gap;
+
+        AppSlot? launch = null;
+        foreach (var app in plugin.Apps.Where(a => plugin.Config.QuickApps!.Contains(a.Info.Id)))
+        {
+            var min = new Vector2(x, origin.Y);
+            ImGui.SetCursorScreenPos(min);
+            if (ImGui.InvisibleButton($"##quick{app.Info.Id}", new Vector2(icon))) launch = app;
+            var hovered = ImGui.IsItemHovered();
+            if (hovered) ImGui.SetTooltip(app.Status ?? app.Info.Name);
+            var grow = new Vector2(hovered ? 2 * S : 0);
+            var dim = app.Instance is null ? 0.38f : 1f;
+            if (Icon(app) is { } tex)
+                draw.AddImage(tex.Handle, min - grow, min + new Vector2(icon) + grow, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1, 1, 1, dim)));
+            else
+                draw.AddRectFilled(min - grow, min + new Vector2(icon) + grow, ImGui.GetColorU32(ImGuiCol.Button), icon * 0.2f);
+            x += icon + gap;
+        }
+
+        if (RoundButton("##closeQuick", FontAwesomeIcon.Times, new Vector2(x + r, mid), r, "Close KosHome", danger: true))
+            IsOpen = false;
+        x += 2 * r;
+
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(x - origin.X, icon)); // AlwaysAutoResize fits the window to this
+        if (launch is not null) Launch(launch);
+    }
+
     // ------------------------------------------------------------------ helpers
 
-    private static IDalamudTextureWrap? Icon(AppSlot app) =>
+    /// <summary>A small round glyph button drawn on the draw list (status bar, launcher, app header).</summary>
+    private static bool RoundButton(string id, FontAwesomeIcon icon, Vector2 centre, float r, string tooltip, bool danger = false)
+    {
+        ImGui.SetCursorScreenPos(centre - new Vector2(r));
+        var clicked = ImGui.InvisibleButton(id, new Vector2(2 * r));
+        var hot = ImGui.IsItemHovered();
+        if (hot) ImGui.SetTooltip(tooltip);
+        var ink = ImGui.GetStyle().Colors[(int)ImGuiCol.Text];
+        var fill = hot ? (danger ? ImGuiColors.DalamudRed with { W = 0.85f } : ink with { W = 0.18f }) : ink with { W = 0.10f };
+        var draw = ImGui.GetWindowDrawList();
+        draw.AddCircleFilled(centre, r, ImGui.GetColorU32(fill), 20);
+        Glyph(draw, icon, centre, r * 1.1f, hot && danger ? 0xFFFFFFFF : ImGui.GetColorU32(ImGuiCol.Text));
+        return clicked;
+    }
+
+    internal static IDalamudTextureWrap? Icon(AppSlot app) =>
         KosHomePlugin.TextureProvider.GetFromManifestResource(typeof(MainWindow).Assembly, $"apps.{app.Info.Id}.png")
                      .TryGetWrap(out var wrap, out _) ? wrap : null;
 

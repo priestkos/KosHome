@@ -70,14 +70,12 @@ public sealed class Plugin : IKosApp
             HelpMessage = "Short alias for /aetherpath.",
         });
 
-        PluginInterface.UiBuilder.Draw += this.WindowSystem.Draw;
 
         Log.Information($"[Aetherpath] loaded (read-only: no teleports, no settings writes). Config v{this.Configuration.Version}");
     }
 
     public void Dispose()
     {
-        PluginInterface.UiBuilder.Draw -= this.WindowSystem.Draw;
 
         this.WindowSystem.RemoveAllWindows();
         this.mainWindow.Dispose();
@@ -102,6 +100,9 @@ public sealed class Plugin : IKosApp
     public void ToggleMain() => this.ToggleMainUi();
 
     public bool MainOpen => this.mainWindow.IsOpen;
+
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => this.WindowSystem.Windows;
 
     public void OpenSettings() => this.ToggleConfigUi();
 

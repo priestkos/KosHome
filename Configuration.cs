@@ -24,13 +24,23 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Springs, fades and slides. Dalamud's Reduce motion turns them off as well.</summary>
     public bool Animations { get; set; } = true;
 
+    /// <summary>Folded down to the quick launcher: a small bar of shortcuts instead of the tablet.</summary>
+    public bool Compact { get; set; }
+
+    /// <summary>App ids on the quick launcher. Null until first sanitised, then the defaults; never initialised here,
+    /// because the JSON reader adds a saved list onto an initialised one and a removed shortcut would come back.</summary>
+    public HashSet<string>? QuickApps { get; set; }
+
+    public static readonly string[] DefaultQuickApps = ["Calc14", "Quill14", "Aetherpath", "WorldClock14"];
+
     /// <summary>Puts a hand-edited or damaged value back in range; true when something changed.</summary>
     public bool Sanitize()
     {
         var o = float.IsFinite(Opacity) ? Math.Clamp(Opacity, MinOpacity, 1f) : DefaultOpacity;
-        var changed = o != Opacity || DisabledApps is null;
+        var changed = o != Opacity || DisabledApps is null || QuickApps is null;
         Opacity = o;
         DisabledApps ??= [];
+        QuickApps ??= [.. DefaultQuickApps];
         return changed;
     }
 

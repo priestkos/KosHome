@@ -75,7 +75,6 @@ public sealed class Plugin : IKosApp
             HelpMessage = "Frontline Advisor. /fla opens the window; on|off, team <mael|adder|flame|auto>, map <name|auto>, dump, test, config.",
         });
 
-        pluginInterface.UiBuilder.Draw += windowSystem.Draw;
         framework.Update += OnFrameworkUpdate;
 
         UpdateDtrVisibility();
@@ -406,13 +405,15 @@ public sealed class Plugin : IKosApp
 
     public bool MainOpen => mainWindow.IsOpen;
 
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
+
     public void OpenSettings() => ToggleConfig();
 
     public void Dispose()
     {
         framework.Update -= OnFrameworkUpdate;
 
-        pluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         commandManager.RemoveHandler(CommandName);
 
         if (dtrEntry is not null)

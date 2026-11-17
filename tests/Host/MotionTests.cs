@@ -131,6 +131,7 @@ public class ConfigurationTests
         var c = new Configuration();
         Assert.True(c.Frosted && c.Wallpaper && c.Animations);
         Assert.Equal(Configuration.DefaultOpacity, c.Opacity);
+        Assert.True(c.Sanitize()); // fills in the quick launcher's default shortcuts, once
         Assert.False(c.Sanitize());
     }
 
@@ -163,6 +164,8 @@ public class ConfigurationTests
         Assert.False(c.Frosted);
         Assert.Equal(Configuration.DefaultOpacity, c.Opacity);
         Assert.True(c.Animations && c.Wallpaper);
+        Assert.True(c.Sanitize()); // only the quick launcher's shortcuts were missing
+        Assert.Equal(["Quill14"], c.DisabledApps);
         Assert.False(c.Sanitize());
     }
 }

@@ -22,7 +22,6 @@ public sealed class Calc14Plugin : IKosApp
         windowSystem = new WindowSystem("Calc14");
         windowSystem.AddWindow(calculatorWindow);
 
-        PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -35,7 +34,6 @@ public sealed class Calc14Plugin : IKosApp
     public void Dispose()
     {
         CommandManager.RemoveHandler(CommandName);
-        PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         calculatorWindow.Dispose();
         windowSystem.RemoveAllWindows();
     }
@@ -43,6 +41,9 @@ public sealed class Calc14Plugin : IKosApp
     public void ToggleMain() => calculatorWindow.Toggle();
 
     public bool MainOpen => calculatorWindow.IsOpen;
+
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
 
     public void OpenSettings() => calculatorWindow.Toggle();
 

@@ -72,14 +72,15 @@ public sealed class Plugin : IKosApp, IKosWidget
 
     public bool MainOpen => mainWindow.IsOpen;
 
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
+
     public void OpenSettings() => ToggleConfig();
 
     public void DrawWidget(WidgetFrame frame) => mainWindow.DrawWidget(frame, ToggleMain);
 
     private void OnDraw()
     {
-        windowSystem.Draw();
-
         var text = pendingCopy;
         if (text is null) return;
 

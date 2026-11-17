@@ -66,8 +66,6 @@ public sealed class Plugin : IKosApp
 
     private void OnDraw()
     {
-        windowSystem.Draw();
-
         var text = pendingCopy;
         if (text is null) return;
 
@@ -219,6 +217,9 @@ public sealed class Plugin : IKosApp
     void IKosApp.ToggleMain() => ToggleMain();
 
     public bool MainOpen => mainWindow.IsOpen;
+
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
 
     public void OpenSettings() => ToggleMain();
 }

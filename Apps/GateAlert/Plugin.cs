@@ -55,7 +55,6 @@ public sealed class GateAlertPlugin : IKosApp
             HelpMessage = "Fire a test GATE alert so you can see the chat line.",
         });
 
-        this.pluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
 
         this.watcher.Start();
 
@@ -98,6 +97,9 @@ public sealed class GateAlertPlugin : IKosApp
 
     public bool MainOpen => this.configWindow.IsOpen;
 
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => this.windowSystem.Windows;
+
     public void OpenSettings() => this.configWindow.IsOpen = true;
 
     private void SaveConfiguration()
@@ -109,7 +111,6 @@ public sealed class GateAlertPlugin : IKosApp
     public void Dispose()
     {
         this.watcher.Dispose();
-        this.pluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
         this.commandManager.RemoveHandler(TestCommandName);
         this.commandManager.RemoveHandler(CommandName);
         this.windowSystem.RemoveAllWindows();

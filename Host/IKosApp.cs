@@ -1,3 +1,4 @@
+using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 
 namespace KosHome;
@@ -13,6 +14,9 @@ public interface IKosApp : IDisposable
     bool MainOpen { get; }
 
     void OpenSettings();
+
+    /// <summary>The app's windows. KosHome draws them inside its own window, so the app never draws them itself.</summary>
+    IReadOnlyList<IWindow> Windows { get; }
 }
 
 /// <summary>An app that lives on the home screen as a widget instead of an icon (see <see cref="AppInfo.Widget"/>).

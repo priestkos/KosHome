@@ -9,6 +9,7 @@ using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Command;
 using Dalamud.Interface;
+using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
@@ -29,7 +30,6 @@ public sealed unsafe class Plugin : IKosApp
     private readonly IObjectTable objectTable;
     private readonly IFramework framework;
     private readonly IDalamudPluginInterface pluginInterface;
-    private readonly IUiBuilder uiBuilder;
     private readonly ICommandManager commandManager;
 
     /// <summary>Per-object baseline (the value the game itself wanted) plus what we last wrote.</summary>
@@ -39,7 +39,7 @@ public sealed unsafe class Plugin : IKosApp
     private readonly HashSet<nint> live = [];
 
     private Configuration config;
-    private bool windowOpen;
+    private readonly ActionWindow window;
 
     public Plugin(
         IDalamudPluginInterface pluginInterface,
@@ -52,7 +52,6 @@ public sealed unsafe class Plugin : IKosApp
         this.log = log;
         this.objectTable = objectTable;
         this.framework = framework;
-        this.uiBuilder = pluginInterface.UiBuilder;
         this.commandManager = commandManager;
 
         this.config = AppConfig.Load<Configuration>(pluginInterface, "NameplateOffset");
@@ -60,7 +59,7 @@ public sealed unsafe class Plugin : IKosApp
         // A hand-edited config can hold NaN/Infinity or an out-of-range value.
         this.config.Offset = OffsetRules.Sanitize(this.config.Offset);
 
-        this.uiBuilder.Draw += this.DrawConfigWindow;
+        this.window = new ActionWindow("Nameplate Offset###NameplateOffset", this.DrawConfigWindow);
         this.framework.Update += this.OnFrameworkUpdate;
 
         this.commandManager.AddHandler(CommandName, new CommandInfo(this.OnCommand)
@@ -74,25 +73,26 @@ public sealed unsafe class Plugin : IKosApp
     public void Dispose()
     {
         this.framework.Update -= this.OnFrameworkUpdate;
-        this.uiBuilder.Draw -= this.DrawConfigWindow;
         this.commandManager.RemoveHandler(CommandName);
 
         // Put every plate back where the game wanted it.
         this.RestoreAll();
     }
 
-    public void ToggleMain() => this.windowOpen = !this.windowOpen;
+    public void ToggleMain() => this.window.Toggle();
 
-    public bool MainOpen => this.windowOpen;
+    public bool MainOpen => this.window.IsOpen;
 
-    public void OpenSettings() => this.windowOpen = true;
+    public IReadOnlyList<IWindow> Windows => [this.window];
+
+    public void OpenSettings() => this.window.IsOpen = true;
 
     private void OnCommand(string command, string args)
     {
         var trimmed = args.Trim();
         if (trimmed.Length == 0)
         {
-            this.windowOpen = !this.windowOpen;
+            this.window.Toggle();
             return;
         }
 
@@ -229,18 +229,6 @@ public sealed unsafe class Plugin : IKosApp
 
     private void DrawConfigWindow()
     {
-        if (!this.windowOpen)
-        {
-            return;
-        }
-
-        ImGui.SetNextWindowSize(new Vector2(340, -1), ImGuiCond.FirstUseEver);
-        if (!ImGui.Begin("Nameplate Offset###NameplateOffset", ref this.windowOpen))
-        {
-            ImGui.End();
-            return;
-        }
-
         ImGui.TextWrapped("Raises the plate above your head. 1 yalm = 1 in-game metre.");
         ImGui.Spacing();
 
@@ -285,8 +273,6 @@ public sealed unsafe class Plugin : IKosApp
 
         ImGui.Spacing();
         ImGui.TextDisabled("/npoffset <yalms>  |  /npoffset 0 to reset");
-
-        ImGui.End();
     }
 }
 

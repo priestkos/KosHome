@@ -19,7 +19,6 @@ public sealed class KosHomePlugin : IDalamudPlugin
     private const string CommandName = "/koshome";
     private readonly WindowSystem windowSystem = new("KosHome");
     private readonly MainWindow mainWindow;
-    private readonly SettingsWindow settingsWindow;
     private bool disposed;
 
     internal Configuration Config { get; }
@@ -27,9 +26,8 @@ public sealed class KosHomePlugin : IDalamudPlugin
     /// <summary>The big clock on the home screen: the game's own Axis font at 36 px, built by Dalamud's font atlas.</summary>
     internal IFontHandle ClockFont { get; }
 
-    internal bool SettingsOpen => settingsWindow.IsOpen;
-
-    internal void ToggleSettings() => settingsWindow.Toggle();
+    /// <summary>The /xlplugins cog: KosHome Settings is a page of the tablet.</summary>
+    internal void ToggleSettings() => mainWindow.ToggleSettings();
 
     internal List<AppSlot> Apps { get; } = AppCatalog.All.Select(a => new AppSlot(a)).ToList();
 
@@ -39,16 +37,14 @@ public sealed class KosHomePlugin : IDalamudPlugin
         if (Config.Sanitize()) PluginInterface.SavePluginConfig(Config);
         ClockFont = PluginInterface.UiBuilder.FontAtlas.NewGameFontHandle(new GameFontStyle(GameFontFamilyAndSize.Axis36));
         mainWindow = new MainWindow(this);
-        settingsWindow = new SettingsWindow(this);
         windowSystem.AddWindow(mainWindow);
-        windowSystem.AddWindow(settingsWindow);
         KosLib.Kos.Mono = PluginInterface.UiBuilder.MonoFontHandle; // section tags; Dalamud owns the handle
-        PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw += OnDraw;
         PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
         PluginInterface.UiBuilder.OpenConfigUi += ToggleSettings;
         CommandManager.AddHandler(CommandName, new CommandInfo((_, _) => mainWindow.Toggle())
         {
-            HelpMessage = "Open KosHome: tap an app to open or close it; the dock has the Apps page and KosHome Settings.",
+            HelpMessage = "Open KosHome: every app opens inside it; the dock has the Apps page and KosHome Settings.",
         });
 
         PluginInterface.ActivePluginsChanged += OnActivePluginsChanged;
@@ -65,10 +61,17 @@ public sealed class KosHomePlugin : IDalamudPlugin
         CommandManager.RemoveHandler(CommandName);
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleSettings;
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
-        PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw -= OnDraw;
         windowSystem.RemoveAllWindows();
         ClockFont.Dispose(); // ours (unlike MonoFontHandle), and no window can draw with it any more
         KosLib.Kos.Mono = null; // not disposed: the handle is Dalamud's
+    }
+
+    /// <summary>The apps' windows open and close by command even while the tablet is shut, so they are watched every frame.</summary>
+    private void OnDraw()
+    {
+        mainWindow.TrackAppWindows();
+        windowSystem.Draw();
     }
 
     internal void SetEnabled(AppSlot app, bool on)

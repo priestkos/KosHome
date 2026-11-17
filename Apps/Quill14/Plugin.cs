@@ -76,7 +76,6 @@ public sealed class Plugin : IKosApp
         window = new MainWindow(this);
         windowSystem.AddWindow(window);
 
-        pluginInterface.UiBuilder.Draw += windowSystem.Draw;
         chatGui.ChatMessage += OnChatMessage;
         clientState.Logout += OnLogout;
         framework.Update += OnUpdate;
@@ -100,13 +99,15 @@ public sealed class Plugin : IKosApp
         framework.Update -= OnUpdate;
         clientState.Logout -= OnLogout;
         chatGui.ChatMessage -= OnChatMessage;
-        pluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
     }
 
     public void ToggleMain() => window.Toggle();
 
     public bool MainOpen => window.IsOpen;
+
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
 
     public void OpenSettings() => window.OpenSettings();
 

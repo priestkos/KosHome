@@ -34,7 +34,6 @@ public sealed class Plugin : IKosApp
         mainWindow = new MainWindow(penumbra, glamourer, config, () => AppConfig.Save(PluginInterface, "Wardrobe14", config));
         windowSystem.AddWindow(mainWindow);
 
-        PluginInterface.UiBuilder.Draw += windowSystem.Draw;
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "Open Wardrobe14. /pmm probe = read-only timing report, /pmm redraw = redraw your character.",
@@ -44,7 +43,6 @@ public sealed class Plugin : IKosApp
     public void Dispose()
     {
         CommandManager.RemoveHandler(CommandName);
-        PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
         glamourer.Dispose();
         penumbra.Dispose();
@@ -53,6 +51,9 @@ public sealed class Plugin : IKosApp
     public void ToggleMain() => mainWindow.Toggle();
 
     public bool MainOpen => mainWindow.IsOpen;
+
+    /// <summary>Drawn inside KosHome's window, not by this app's WindowSystem.</summary>
+    public IReadOnlyList<IWindow> Windows => windowSystem.Windows;
 
     public void OpenSettings() => mainWindow.Toggle();
 
