@@ -32,7 +32,6 @@ public sealed class MainWindow : Window
     private Vector2 expandedSize = new(440, 600);
     private bool resize;
     private readonly Spring[] tileScale;
-    private readonly float[] ripple;   // seconds since the tile was tapped; negative = no ripple
     private readonly float[] openDot;  // 0..1 the "window open" dot under each icon
     private readonly Spring[] dockScale = [new(1), new(1), new(1)];
     private KosTheme.Scope? windowTheme;
@@ -54,7 +53,6 @@ public sealed class MainWindow : Window
         settings = new SettingsPage(plugin);
         var n = plugin.Apps.Count;
         tileScale = Enumerable.Repeat(new Spring(1), n).ToArray();
-        ripple = Enumerable.Repeat(-1f, n).ToArray();
         openDot = new float[n];
         Size = expandedSize;
         SizeCondition = ImGuiCond.FirstUseEver;
@@ -454,19 +452,18 @@ public sealed class MainWindow : Window
         {
             var app = plugin.Apps[i];
             if (app.Info.Widget) continue; // drawn by DrawWidgets
+            if (plugin.Config.DisabledApps.Contains(app.Info.Id)) continue; // off: only on the Apps page
             var min = origin + new Vector2(slot % cols * cell.X, slot / cols * cell.Y);
             slot++;
             ImGui.SetCursorScreenPos(min);
             var clicked = ImGui.InvisibleButton($"##{app.Info.Id}", cell);
             var hovered = ImGui.IsItemHovered();
             var held = ImGui.IsItemActive();
-            var on = !plugin.Config.DisabledApps.Contains(app.Info.Id);
             var mainOpen = app.Instance?.MainOpen == true;
 
             if (hovered)
                 ImGui.SetTooltip(app.Info.Name + "\n" + app.Info.Summary + "\n" + app.Info.Commands + "\n\n"
-                                 + (app.Status ?? (!on ? "Off: click to switch it on and open it."
-                                     : mainOpen ? "Open: click to show it. Right-click to close it."
+                                 + (app.Status ?? (mainOpen ? "Open: click to show it. Right-click to close it."
                                      : "Click to open. Right-click for more.")));
             using (var menu = ImRaii.ContextPopupItem($"##menu{app.Info.Id}"))
             {
@@ -479,30 +476,29 @@ public sealed class MainWindow : Window
                     }
                     if (app.Info.HasSettings && ImGui.MenuItem("Settings", "", false, app.Instance is not null)) app.Instance?.OpenSettings();
                     ImGui.Separator();
-                    if (ImGui.MenuItem(on ? "Switch off" : "Switch on")) toggle = app;
+                    if (ImGui.MenuItem("Switch off")) toggle = app;
                 }
             }
 
             if (clicked)
             {
                 launch = app;
-                ripple[i] = 0;
                 tileScale[i].Velocity -= 3f; // a little press-kick even on a quick tap
             }
 
             var target = held ? 0.92f : hovered ? 1.08f : 1f;
             if (animate) tileScale[i].Step(target, dt); else tileScale[i].Snap(target);
             openDot[i] = animate ? Motion.Approach(openDot[i], mainOpen ? 1 : 0, dt, 14) : mainOpen ? 1 : 0;
-            if (ripple[i] >= 0) ripple[i] = animate && ripple[i] + dt < 0.55f ? ripple[i] + dt : -1;
 
             // Entrance: each icon pops in a beat after the one before it.
             var t = animate ? Motion.Stagger(sinceOpen, slot + 1, 0.035f, 0.42f) : 1;
-            DrawTile(app, i, min, cell, icon, Motion.EaseOutBack(t), Motion.EaseOutCubic(t), on, hovered);
+            DrawTile(app, i, min, cell, icon, Motion.EaseOutBack(t), Motion.EaseOutCubic(t), hovered);
         }
 
         var rows = (slot + cols - 1) / cols;
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(new Vector2(width, rows * cell.Y)); // claim the grid so the page can scroll when short
+        if (slot == 0) ImGui.TextDisabled("Every app is switched off. Switch them on in Apps (the dock).");
 
         // Acted on after the loop, never while drawing the list.
         if (toggle is not null)
@@ -539,7 +535,7 @@ public sealed class MainWindow : Window
         Toast(app, wasOff ? "switched on" : "opened");
     }
 
-    private void DrawTile(AppSlot app, int i, Vector2 min, Vector2 cell, float icon, float pop, float alpha, bool on, bool hovered)
+    private void DrawTile(AppSlot app, int i, Vector2 min, Vector2 cell, float icon, float pop, float alpha, bool hovered)
     {
         var draw = ImGui.GetWindowDrawList();
         var ink = ImGui.GetStyle().Colors[(int)ImGuiCol.Text];
@@ -555,7 +551,7 @@ public sealed class MainWindow : Window
         {
             var g = new Vector2(k * 1.5f * S);
             draw.AddRectFilled(a - g + new Vector2(0, 3 * S), b + g + new Vector2(0, 3 * S),
-                               ImGui.GetColorU32(new Vector4(0, 0, 0, 0.07f * alpha * (on ? 1 : 0.4f))), rounding + g.X);
+                               ImGui.GetColorU32(new Vector4(0, 0, 0, 0.07f * alpha)), rounding + g.X);
         }
 
         var dim = app.Instance is null ? 0.38f : 1f;
@@ -563,14 +559,6 @@ public sealed class MainWindow : Window
             draw.AddImage(tex.Handle, a, b, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1, 1, 1, alpha * dim)));
         else
             draw.AddRectFilled(a, b, ImGui.GetColorU32(ImGuiCol.Button, alpha), rounding);
-
-        // Ripple from a tap.
-        if (ripple[i] >= 0)
-        {
-            var t = ripple[i] / 0.55f;
-            var e = Motion.EaseOutCubic(t);
-            draw.AddCircle(centre, icon * (0.5f + 0.45f * e), ImGui.GetColorU32(ink with { W = 0.45f * (1 - t) }), 48, 2 * S);
-        }
 
         // Something is wrong: an orange dot that breathes.
         if (app.Status is not null)
@@ -586,7 +574,7 @@ public sealed class MainWindow : Window
         var size = ImGui.CalcTextSize(label);
         var at = new Vector2(min.X + (cell.X - size.X) / 2, min.Y + 8 * S + icon + 7 * S + (1 - alpha) * 14 * S);
         draw.AddText(at + new Vector2(0, S), ImGui.GetColorU32(new Vector4(0, 0, 0, 0.45f * alpha)), label);
-        draw.AddText(at, ImGui.GetColorU32((on ? ink : ink with { W = 0.5f }) with { W = (on ? ink.W : 0.5f) * alpha }), label);
+        draw.AddText(at, ImGui.GetColorU32(ink with { W = ink.W * alpha }), label);
 
         // Open: a small pill under the label, like a dock's running light.
         if (openDot[i] > 0.01f)

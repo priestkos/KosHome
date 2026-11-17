@@ -25,8 +25,9 @@ All apps start switched on. `/koshome` opens the tablet:
 
 - **Home:** a clock card (local time, Eorzea time, how many apps are running), the WorldClock14 widget (every zone
   live; click a zone to copy it for chat, or use its buttons to copy all, convert another time and set zones) and the app icons. Click an icon to open
-  the app; an app that is off is switched on first. A small light under an icon means the app is open; an orange dot
-  means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and Switch off.
+  the app. Apps that are switched off aren't shown (switch them on in Apps). A small light under an icon means the app
+  is open; an orange dot means it isn't running, and hovering says why. Right-click an icon for Open/Close, Settings and
+  Switch off.
 - **Every app opens inside the tablet**, from an icon, its command or its settings: a header with Home, the app, tabs
   for its main and settings windows, and close. Home leaves it open (click its icon to come back). Closing or folding
   the tablet closes the apps' windows.
