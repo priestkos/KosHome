@@ -1,0 +1,3 @@
+[submodule "KosLib"]
+	path = KosLib
+	url = https://github.com/priestkos/KosLib.git

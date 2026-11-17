@@ -29,6 +29,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: true # KosLib source-included
 
       - name: Prepare automatic release (main push)
         id: auto

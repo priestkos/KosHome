@@ -12,6 +12,7 @@ public sealed class KosHomePlugin : IDalamudPlugin
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
+    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
 
     private const string CommandName = "/koshome";
     private readonly WindowSystem windowSystem = new("KosHome");
@@ -27,9 +28,10 @@ public sealed class KosHomePlugin : IDalamudPlugin
         Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         mainWindow = new MainWindow(this);
         windowSystem.AddWindow(mainWindow);
+        KosLib.Kos.Mono = PluginInterface.UiBuilder.MonoFontHandle; // section tags; Dalamud owns the handle
         PluginInterface.UiBuilder.Draw += windowSystem.Draw;
         PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
-        PluginInterface.UiBuilder.OpenConfigUi += mainWindow.Toggle;
+        PluginInterface.UiBuilder.OpenConfigUi += mainWindow.OpenAppsPage;
         CommandManager.AddHandler(CommandName, new CommandInfo((_, _) => mainWindow.Toggle())
         {
             HelpMessage = "Open KosHome: switch apps on and off, open them and their settings.",
@@ -47,10 +49,11 @@ public sealed class KosHomePlugin : IDalamudPlugin
         for (var i = Apps.Count - 1; i >= 0; i--)
             Stop(Apps[i]);
         CommandManager.RemoveHandler(CommandName);
-        PluginInterface.UiBuilder.OpenConfigUi -= mainWindow.Toggle;
+        PluginInterface.UiBuilder.OpenConfigUi -= mainWindow.OpenAppsPage;
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
+        KosLib.Kos.Mono = null; // not disposed: the handle is Dalamud's
     }
 
     internal void SetEnabled(AppSlot app, bool on)
