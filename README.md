@@ -82,7 +82,8 @@ KosHome is one Dalamud plugin. Each app is the old plugin's code under `Apps/<Na
   starts from defaults.
 
 The look is KosLib's Material style; frosted glass uses Dalamud's blur. [KosLib](https://github.com/priestkos/KosLib) is source-included as a git submodule:
-`git clone --recurse-submodules`, or `git submodule update --init` in an existing clone.
+`git clone --recurse-submodules`, or `git submodule update --init` in an existing clone. Each hour the Library pins
+workflow moves the pin to KosLib's latest `main` once the build and tests pass, or opens an issue if they don't.
 
 ## Commands
 
