@@ -61,6 +61,14 @@ internal static class Program
         "AKST", "AKDT", "AEST", "AEDT", "ACST", "ACDT", "NZST", "NZDT",
     };
 
+    private static bool HasDaylightSavingIn2026(TimeZoneInfo zone)
+    {
+        var start = new DateTime(2026, 1, 1);
+        for (var day = 0; day < 365; day++)
+            if (zone.IsDaylightSavingTime(start.AddDays(day))) return true;
+        return false;
+    }
+
     private static void ZoneResolution()
     {
         foreach (var preset in Defaults.Presets())
@@ -74,10 +82,20 @@ internal static class Program
 
             Assert($"preset {preset.Label} resolves ({preset.Id})", ZoneResolver.ResolveId(preset.Id) is not null);
 
-            // A zone that changes its clocks must not carry one season's abbreviation (BST is wrong all winter).
-            if (ZoneResolver.ResolveId(preset.Id)?.SupportsDaylightSavingTime == true)
+            // SupportsDaylightSavingTime includes historical rules on some platforms.
+            // Check the year under test so a historical transition does not mislabel today's preset.
+            if (ZoneResolver.ResolveId(preset.Id) is { } zone && HasDaylightSavingIn2026(zone))
                 Assert($"DST preset {preset.Label} has a season-neutral label", !SeasonalLabels.Contains(preset.Label));
         }
+
+        var china = Defaults.Presets().Single(p => p.Id == "Asia/Shanghai");
+        Check("China preset retains its label", china.Label, "CST");
+        Assert("China preset remains an IANA zone", !china.IsFixed);
+        var chinaZone = ZoneResolver.ResolveId(china.Id)!;
+        Assert("China does not observe DST in 2026", !HasDaylightSavingIn2026(chinaZone));
+        Assert("New York observes DST in 2026", HasDaylightSavingIn2026(ZoneResolver.ResolveId("America/New_York")!));
+        Check("China offset in January", chinaZone.GetUtcOffset(new DateTimeOffset(2026, 1, 15, 12, 0, 0, TimeSpan.Zero)), TimeSpan.FromHours(8));
+        Check("China offset in July", chinaZone.GetUtcOffset(new DateTimeOffset(2026, 7, 15, 12, 0, 0, TimeSpan.Zero)), TimeSpan.FromHours(8));
 
         Check("IANA id resolves", ZoneResolver.ResolveId("Asia/Tokyo")?.Id, "Asia/Tokyo");
         Assert("Windows id resolves too", ZoneResolver.ResolveId("Tokyo Standard Time") is not null);
